@@ -1,0 +1,45 @@
+version: 2
+
+project_name: tirith
+
+before:
+  hooks:
+    - cmd: bash -c "cd frontend && npm ci && npm run build && rm -rf ../internal/dashboard/frontend/* && cp -r out/* ../internal/dashboard/frontend/"
+
+builds:
+  - main: ./cmd/costwatch
+    binary: tirith
+    ldflags:
+      - -s -w -X main.version={{.Version}}
+    env:
+      - CGO_ENABLED=0
+    goos:
+      - darwin
+      - linux
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+
+checksum:
+  name_template: "checksums.txt"
+
+changelog:
+  sort: asc
+
+brews:
+  - repository:
+      owner: joedaviesio
+      name: homebrew-tap
+    name: tirith
+    homepage: "https://github.com/joedaviesio/tirith"
+    description: "AI API cost observability — one import, full transparency"
+    install: |
+      bin.install "tirith"
+    test: |
+      assert_match "tirith", shell_output("#{bin}/tirith --version")

@@ -1,5 +1,5 @@
 # Go binary
-costwatch
+/costwatch
 *.exe
 
 # IDE
@@ -32,4 +32,4 @@ frontend/.next/
 testing/.env
 
 # Tirith binary
-tirith
+/tirith
