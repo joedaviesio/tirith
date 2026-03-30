@@ -1,0 +1,1 @@
+I am after a simpler graph model that anthropic use whereby i would like a line graph that toggles between token use and token cost.

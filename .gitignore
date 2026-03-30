@@ -1,0 +1,35 @@
+# Go binary
+costwatch
+*.exe
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.egg-info/
+dist/
+build/
+
+# TypeScript
+node_modules/
+sdks/typescript/dist/
+
+# Next.js
+frontend/.next/
+
+# CostWatch data
+*.db
+
+# Secrets
+.env
+testing/.env
+
+# Tirith binary
+tirith

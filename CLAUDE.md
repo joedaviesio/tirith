@@ -1,0 +1,136 @@
+# CostWatch — CLAUDE.md
+
+## Project Overview
+
+CostWatch is an open-source CLI + transparent proxy for AI API cost observability. It sits between apps and AI providers (Anthropic, OpenAI, Google), logging every call with cost, tokens, latency, and custom tags. SDK wrappers auto-patch clients at import time — zero config, no env var changes.
+
+Two modes: **Local CLI** (free, SQLite, localhost dashboard) and **Cloud SaaS** (hosted proxy, team dashboards, alerts).
+
+See `COSTWATCH_ARCHITECTURE.md` for full architecture, schema, and product details.
+
+## Tech Stack
+
+- **CLI + Proxy:** Go (single binary, cross-platform)
+- **CLI framework:** Cobra (`github.com/spf13/cobra`)
+- **Local storage:** SQLite (pure Go via `modernc.org/sqlite`)
+- **Proxy:** `net/http/httputil.ReverseProxy`
+- **Dashboard:** React app embedded into Go binary via `embed`
+- **Terminal output:** `github.com/olekukonez/tablewriter`
+- **Python SDK wrapper:** pip package, monkey-patches Anthropic/OpenAI clients
+- **TypeScript SDK wrapper:** npm package, monkey-patches @anthropic-ai/sdk and openai
+
+## Project Structure
+
+```
+costwatch/
+├── cmd/costwatch/main.go          # CLI entrypoint (Cobra)
+├── internal/
+│   ├── proxy/                     # HTTP proxy server + SSE streaming
+│   ├── pricing/                   # Cost calculation engine
+│   ├── storage/                   # SQLite operations + schema
+│   ├── dashboard/                 # Dashboard HTTP server + embedded React
+│   └── report/                    # Terminal output formatting
+├── sdks/
+│   ├── python/                    # Python SDK wrapper (pip install costwatch)
+│   │   ├── pyproject.toml
+│   │   └── costwatch/             # __init__.py auto-patches on import
+│   └── typescript/                # TypeScript SDK wrapper (npm install costwatch)
+│       ├── package.json
+│       └── src/                   # index.ts auto-patches on import
+├── pricing/pricing.yaml           # Community-maintained model pricing
+├── COSTWATCH_ARCHITECTURE.md      # Full architecture reference
+├── go.mod / go.sum
+└── Makefile
+```
+
+## Development Commands
+
+```bash
+# Go CLI
+go build -o costwatch ./cmd/costwatch
+go run ./cmd/costwatch start
+go run ./cmd/costwatch report
+go run ./cmd/costwatch run -- python app.py
+go test ./...
+golangci-lint run
+
+# Python SDK
+cd sdks/python && pip install -e .
+cd sdks/python && pytest
+
+# TypeScript SDK
+cd sdks/typescript && npm install && npm run build
+cd sdks/typescript && npm test
+```
+
+## Key Design Decisions
+
+- **Zero-config integration:** SDK wrappers monkey-patch official clients at import time. Users add one import line — nothing else changes.
+- **Graceful fallback:** If proxy isn't running, SDK wrappers log a warning and connect directly to the provider.
+- **`setdefault` semantics:** SDK patches never override an explicit `base_url` set by the user.
+- **Privacy-first:** Never log prompt/response content by default. Metadata only.
+- **API keys pass through:** Proxy forwards auth headers without storing them.
+- **Cost in cents:** Store `cost_cents` as integer to avoid float precision issues.
+- **Streaming-first:** SSE chunks forwarded in real-time, token counts accumulated from final usage event.
+- **Custom headers stripped:** `X-CostWatch-*` headers are read then removed before forwarding to providers.
+
+## Three Integration Paths
+
+1. **SDK wrapper (recommended):** `import costwatch` — auto-patches all AI clients
+2. **CLI wrapper:** `costwatch run -- python app.py` — injects env vars into subprocess
+3. **Manual env var:** `export ANTHROPIC_BASE_URL=http://localhost:5555/proxy/anthropic`
+
+## Proxy Routing
+
+```
+localhost:5555/proxy/anthropic/v1/messages  →  api.anthropic.com/v1/messages
+localhost:5555/proxy/openai/v1/chat/completions  →  api.openai.com/v1/chat/completions
+```
+
+Auto-detect fallback: `/v1/messages` → Anthropic, `/v1/chat/completions` → OpenAI.
+
+## Custom Headers
+
+```
+X-CostWatch-Tag          # feature tag (e.g., "grant-scanner")
+X-CostWatch-User         # user attribution
+X-CostWatch-Session      # session grouping
+X-CostWatch-Environment  # production, staging, dev
+```
+
+## MVP Scope (v0.1)
+
+Focus: Anthropic Messages API only. Go CLI with `start`, `stop`, `report`, `dashboard`, `run`. HTTP proxy with SSE streaming passthrough. Token + cost logging to SQLite. Tag support. Terminal report. Basic local dashboard. Python + TypeScript SDK wrappers.
+
+Out of scope for MVP: OpenAI/Google in SDK wrappers, `costwatch.tag()` context manager, cloud proxy, auth/billing, alerts.
+
+## Implementation Order
+
+1. Cobra CLI with `start`, `report`, and `run` commands
+2. Reverse proxy for Anthropic Messages API (non-streaming)
+3. Parse response `usage` field for token counts
+4. Log to SQLite
+5. `report` command with terminal table
+6. Streaming (SSE) support
+7. Python SDK wrapper (`import costwatch` auto-patches Anthropic)
+8. TypeScript SDK wrapper (`import "costwatch"` auto-patches @anthropic-ai/sdk)
+9. `costwatch run -- <cmd>` CLI wrapper
+10. Build and embed dashboard
+11. Tag support via custom headers
+12. Package for distribution (Go binary via brew, Python via PyPI, TS via npm)
+
+## Ports
+
+- Proxy: `5555` (default, configurable via `--port`)
+- Dashboard: `5556` (default)
+- Config: `~/.costwatch/config.yaml`
+- Data: `~/.costwatch/data.db`
+
+## Conventions
+
+- Use Go standard library where possible; minimize dependencies.
+- Error handling: return errors, don't panic. Wrap errors with context.
+- Logging: structured logging (slog or zerolog).
+- Tests: table-driven tests, test proxy with httptest.
+- No CGO — use `modernc.org/sqlite` for pure Go SQLite (simpler cross-compilation).
+- SDK wrappers are separate packages in `sdks/` — they don't depend on the Go binary at build time, only at runtime.

@@ -1,0 +1,30 @@
+{
+  "name": "costwatch",
+  "version": "0.1.0",
+  "description": "AI API cost observability — one import, full transparency",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "module",
+  "scripts": {
+    "build": "tsc",
+    "test": "node --test tests/"
+  },
+  "keywords": ["ai", "llm", "cost", "observability", "anthropic", "openai"],
+  "license": "MIT",
+  "devDependencies": {
+    "typescript": "^5.7.0"
+  },
+  "peerDependencies": {
+    "@anthropic-ai/sdk": ">=0.30.0",
+    "openai": ">=4.0.0"
+  },
+  "peerDependenciesMeta": {
+    "@anthropic-ai/sdk": { "optional": true },
+    "openai": { "optional": true }
+  },
+  "files": ["dist/", "README.md"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/joedaviesio/costwatch"
+  }
+}
