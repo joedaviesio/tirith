@@ -36,6 +36,7 @@ brews:
   - repository:
       owner: joedaviesio
       name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
     name: tirith
     homepage: "https://github.com/joedaviesio/tirith"
     description: "AI API cost observability — one import, full transparency"
