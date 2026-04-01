@@ -2,7 +2,7 @@
  * Monkey-patching logic for Anthropic and OpenAI SDKs.
  */
 
-const PATCHED_MARKER = Symbol("costwatch_patched");
+const PATCHED_MARKER = Symbol("tirith_patched");
 
 export async function patchAnthropic(proxyUrl: string): Promise<void> {
   let anthropicMod: any;

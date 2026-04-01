@@ -9,10 +9,10 @@ frontend:
 	cp -r frontend/out/* internal/dashboard/frontend/
 
 build: frontend
-	go build -ldflags "-X main.version=$(VERSION)" -o $(BINARY) ./cmd/costwatch
+	go build -ldflags "-X main.version=$(VERSION)" -o $(BINARY) ./cmd/tirith
 
 build-go:
-	go build -ldflags "-X main.version=$(VERSION)" -o $(BINARY) ./cmd/costwatch
+	go build -ldflags "-X main.version=$(VERSION)" -o $(BINARY) ./cmd/tirith
 
 test:
 	go test ./...

@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/joedaviesio/costwatch/internal/config"
-	"github.com/joedaviesio/costwatch/internal/pricing"
-	"github.com/joedaviesio/costwatch/internal/storage"
+	"github.com/joedaviesio/tirith/internal/config"
+	"github.com/joedaviesio/tirith/internal/pricing"
+	"github.com/joedaviesio/tirith/internal/storage"
 )
 
 type Server struct {

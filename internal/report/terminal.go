@@ -5,7 +5,7 @@ import (
 	"io"
 	"strings"
 
-	"github.com/joedaviesio/costwatch/internal/storage"
+	"github.com/joedaviesio/tirith/internal/storage"
 )
 
 func FormatCents(cents int) string {

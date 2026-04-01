@@ -14,7 +14,7 @@ tirith
 
 ### 1. Make bare `tirith` (no subcommand) start everything + open browser
 
-**File: `cmd/costwatch/main.go`**
+**File: `cmd/tirith/main.go`**
 
 - Extract the start logic from `startCmd().RunE` into a standalone function:
   ```go
@@ -32,7 +32,7 @@ tirith
 **New file: `.goreleaser.yaml`**
 
 - Build targets: `darwin/amd64`, `darwin/arm64`, `linux/amd64`, `linux/arm64`
-- Main: `./cmd/costwatch`
+- Main: `./cmd/tirith`
 - Binary name: `tirith`
 - Ldflags: `-X main.version={{.Version}}`
 - Before hook: build frontend (`cd frontend && npm run build && cp -r out/* ../internal/dashboard/frontend/`)
@@ -57,7 +57,7 @@ tirith
 
 | File | Action |
 |------|--------|
-| `cmd/costwatch/main.go` | Extract `runStart()`, add root `RunE` with browser open, cross-platform open, `--no-open` flag |
+| `cmd/tirith/main.go` | Extract `runStart()`, add root `RunE` with browser open, cross-platform open, `--no-open` flag |
 | `.goreleaser.yaml` | New — cross-compile + Homebrew tap config |
 | `.github/workflows/release.yaml` | New — tag-triggered release workflow |
 

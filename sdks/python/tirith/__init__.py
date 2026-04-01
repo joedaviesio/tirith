@@ -10,8 +10,8 @@ Usage:
     client = Anthropic()  # routes through Tirith proxy
 """
 
-from costwatch._patch import patch_all as _patch_all
-from costwatch._config import configure, get_proxy_url
+from tirith._patch import patch_all as _patch_all
+from tirith._config import configure, get_proxy_url
 
 __version__ = "0.1.0"
 

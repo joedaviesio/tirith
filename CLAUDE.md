@@ -1,12 +1,12 @@
-# CostWatch — CLAUDE.md
+# Tirith — CLAUDE.md
 
 ## Project Overview
 
-CostWatch is an open-source CLI + transparent proxy for AI API cost observability. It sits between apps and AI providers (Anthropic, OpenAI, Google), logging every call with cost, tokens, latency, and custom tags. SDK wrappers auto-patch clients at import time — zero config, no env var changes.
+Tirith is an open-source CLI + transparent proxy for AI API cost observability. It sits between apps and AI providers (Anthropic, OpenAI, Google), logging every call with cost, tokens, latency, and custom tags. SDK wrappers auto-patch clients at import time — zero config, no env var changes.
 
 Two modes: **Local CLI** (free, SQLite, localhost dashboard) and **Cloud SaaS** (hosted proxy, team dashboards, alerts).
 
-See `COSTWATCH_ARCHITECTURE.md` for full architecture, schema, and product details.
+See `TIRITH_ARCHITECTURE.md` for full architecture, schema, and product details.
 
 ## Tech Stack
 
@@ -22,8 +22,8 @@ See `COSTWATCH_ARCHITECTURE.md` for full architecture, schema, and product detai
 ## Project Structure
 
 ```
-costwatch/
-├── cmd/costwatch/main.go          # CLI entrypoint (Cobra)
+tirith/
+├── cmd/tirith/main.go             # CLI entrypoint (Cobra)
 ├── internal/
 │   ├── proxy/                     # HTTP proxy server + SSE streaming
 │   ├── pricing/                   # Cost calculation engine
@@ -31,14 +31,14 @@ costwatch/
 │   ├── dashboard/                 # Dashboard HTTP server + embedded React
 │   └── report/                    # Terminal output formatting
 ├── sdks/
-│   ├── python/                    # Python SDK wrapper (pip install costwatch)
+│   ├── python/                    # Python SDK wrapper (pip install tirith)
 │   │   ├── pyproject.toml
-│   │   └── costwatch/             # __init__.py auto-patches on import
-│   └── typescript/                # TypeScript SDK wrapper (npm install costwatch)
+│   │   └── tirith/                # __init__.py auto-patches on import
+│   └── typescript/                # TypeScript SDK wrapper (npm install tirith)
 │       ├── package.json
 │       └── src/                   # index.ts auto-patches on import
 ├── pricing/pricing.yaml           # Community-maintained model pricing
-├── COSTWATCH_ARCHITECTURE.md      # Full architecture reference
+├── TIRITH_ARCHITECTURE.md         # Full architecture reference
 ├── go.mod / go.sum
 └── Makefile
 ```
@@ -47,10 +47,10 @@ costwatch/
 
 ```bash
 # Go CLI
-go build -o costwatch ./cmd/costwatch
-go run ./cmd/costwatch start
-go run ./cmd/costwatch report
-go run ./cmd/costwatch run -- python app.py
+go build -o tirith ./cmd/tirith
+go run ./cmd/tirith start
+go run ./cmd/tirith report
+go run ./cmd/tirith run -- python app.py
 go test ./...
 golangci-lint run
 
@@ -72,12 +72,12 @@ cd sdks/typescript && npm test
 - **API keys pass through:** Proxy forwards auth headers without storing them.
 - **Cost in cents:** Store `cost_cents` as integer to avoid float precision issues.
 - **Streaming-first:** SSE chunks forwarded in real-time, token counts accumulated from final usage event.
-- **Custom headers stripped:** `X-CostWatch-*` headers are read then removed before forwarding to providers.
+- **Custom headers stripped:** `X-Tirith-*` headers are read then removed before forwarding to providers.
 
 ## Three Integration Paths
 
-1. **SDK wrapper (recommended):** `import costwatch` — auto-patches all AI clients
-2. **CLI wrapper:** `costwatch run -- python app.py` — injects env vars into subprocess
+1. **SDK wrapper (recommended):** `import tirith` — auto-patches all AI clients
+2. **CLI wrapper:** `tirith run -- python app.py` — injects env vars into subprocess
 3. **Manual env var:** `export ANTHROPIC_BASE_URL=http://localhost:5555/proxy/anthropic`
 
 ## Proxy Routing
@@ -92,17 +92,17 @@ Auto-detect fallback: `/v1/messages` → Anthropic, `/v1/chat/completions` → O
 ## Custom Headers
 
 ```
-X-CostWatch-Tag          # feature tag (e.g., "grant-scanner")
-X-CostWatch-User         # user attribution
-X-CostWatch-Session      # session grouping
-X-CostWatch-Environment  # production, staging, dev
+X-Tirith-Tag          # feature tag (e.g., "grant-scanner")
+X-Tirith-User         # user attribution
+X-Tirith-Session      # session grouping
+X-Tirith-Environment  # production, staging, dev
 ```
 
 ## MVP Scope (v0.1)
 
 Focus: Anthropic Messages API only. Go CLI with `start`, `stop`, `report`, `dashboard`, `run`. HTTP proxy with SSE streaming passthrough. Token + cost logging to SQLite. Tag support. Terminal report. Basic local dashboard. Python + TypeScript SDK wrappers.
 
-Out of scope for MVP: OpenAI/Google in SDK wrappers, `costwatch.tag()` context manager, cloud proxy, auth/billing, alerts.
+Out of scope for MVP: OpenAI/Google in SDK wrappers, `tirith.tag()` context manager, cloud proxy, auth/billing, alerts.
 
 ## Implementation Order
 
@@ -112,9 +112,9 @@ Out of scope for MVP: OpenAI/Google in SDK wrappers, `costwatch.tag()` context m
 4. Log to SQLite
 5. `report` command with terminal table
 6. Streaming (SSE) support
-7. Python SDK wrapper (`import costwatch` auto-patches Anthropic)
-8. TypeScript SDK wrapper (`import "costwatch"` auto-patches @anthropic-ai/sdk)
-9. `costwatch run -- <cmd>` CLI wrapper
+7. Python SDK wrapper (`import tirith` auto-patches Anthropic)
+8. TypeScript SDK wrapper (`import "tirith"` auto-patches @anthropic-ai/sdk)
+9. `tirith run -- <cmd>` CLI wrapper
 10. Build and embed dashboard
 11. Tag support via custom headers
 12. Package for distribution (Go binary via brew, Python via PyPI, TS via npm)
@@ -123,8 +123,8 @@ Out of scope for MVP: OpenAI/Google in SDK wrappers, `costwatch.tag()` context m
 
 - Proxy: `5555` (default, configurable via `--port`)
 - Dashboard: `5556` (default)
-- Config: `~/.costwatch/config.yaml`
-- Data: `~/.costwatch/data.db`
+- Config: `~/.tirith/config.yaml`
+- Data: `~/.tirith/data.db`
 
 ## Conventions
 

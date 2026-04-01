@@ -70,10 +70,10 @@ Sets `ANTHROPIC_BASE_URL` and `OPENAI_BASE_URL` automatically so your app routes
 Tag your API calls for filtering in reports and the dashboard.
 
 ```
-X-CostWatch-Tag: grant-scanner       # feature tag
-X-CostWatch-User: user_abc123        # user attribution
-X-CostWatch-Session: sess_xyz        # session grouping
-X-CostWatch-Environment: production  # environment label
+X-Tirith-Tag: grant-scanner       # feature tag
+X-Tirith-User: user_abc123        # user attribution
+X-Tirith-Session: sess_xyz        # session grouping
+X-Tirith-Environment: production  # environment label
 ```
 
 These headers are stripped before forwarding to the upstream provider.
@@ -83,11 +83,11 @@ These headers are stripped before forwarding to the upstream provider.
 ### Python
 
 ```bash
-pip install costwatch
+pip install tirith
 ```
 
 ```python
-import costwatch  # patches Anthropic + OpenAI SDKs automatically
+import tirith  # patches Anthropic + OpenAI SDKs automatically
 
 from anthropic import Anthropic
 client = Anthropic()  # routes through Tirith proxy
@@ -96,11 +96,11 @@ client = Anthropic()  # routes through Tirith proxy
 ### TypeScript
 
 ```bash
-npm install costwatch
+npm install tirith
 ```
 
 ```typescript
-import "costwatch";  // patches @anthropic-ai/sdk and openai automatically
+import "tirith";  // patches @anthropic-ai/sdk and openai automatically
 
 import Anthropic from "@anthropic-ai/sdk";
 const client = new Anthropic();  // routes through Tirith proxy
@@ -115,7 +115,7 @@ export OPENAI_BASE_URL=http://localhost:5555/proxy/openai
 
 ## Configuration
 
-Config file: `~/.costwatch/config.yaml`
+Config file: `~/.tirith/config.yaml`
 
 ```yaml
 proxy:
@@ -127,7 +127,7 @@ dashboard:
 
 storage:
   driver: sqlite
-  path: ~/.costwatch/data.db
+  path: ~/.tirith/data.db
 
 providers:
   anthropic:

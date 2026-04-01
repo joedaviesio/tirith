@@ -1,4 +1,4 @@
-module github.com/joedaviesio/costwatch
+module github.com/joedaviesio/tirith
 
 go 1.26.1
 

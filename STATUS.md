@@ -1,28 +1,28 @@
-# CostWatch — Project Status
+# Tirith — Project Status
 
 ## What's Built
 
 ### Go CLI + Proxy (compiles and runs)
 
-The core binary is built. You can run it from this directory with `./costwatch`.
+The core binary is built. You can run it from this directory with `./tirith`.
 
 | Command | Status | What it does |
 |---------|--------|-------------|
-| `./costwatch start` | Working | Starts the proxy on localhost:5555. Accepts API calls, forwards them to Anthropic, logs token counts + cost to SQLite. |
-| `./costwatch report` | Working | Reads the SQLite database and prints a cost summary table — total spend, breakdown by model, breakdown by tag. Currently shows $0.00 because no calls have been made yet. |
-| `./costwatch run -- <your command>` | Working | Starts the proxy, sets the right env vars, runs your command, then shuts down the proxy when done. |
-| `./costwatch stop` | Partial | Tells you how to kill the proxy. No PID file or signal-based stop yet. |
+| `./tirith start` | Working | Starts the proxy on localhost:5555. Accepts API calls, forwards them to Anthropic, logs token counts + cost to SQLite. |
+| `./tirith report` | Working | Reads the SQLite database and prints a cost summary table — total spend, breakdown by model, breakdown by tag. Currently shows $0.00 because no calls have been made yet. |
+| `./tirith run -- <your command>` | Working | Starts the proxy, sets the right env vars, runs your command, then shuts down the proxy when done. |
+| `./tirith stop` | Partial | Tells you how to kill the proxy. No PID file or signal-based stop yet. |
 
 ### What the proxy actually does
 
 When your app sends an API call to `localhost:5555` instead of `api.anthropic.com`, the proxy:
 
-1. Reads any `X-CostWatch-Tag` / `X-CostWatch-User` headers (for labelling)
+1. Reads any `X-Tirith-Tag` / `X-Tirith-User` headers (for labelling)
 2. Strips those headers so Anthropic never sees them
 3. Forwards the request to Anthropic exactly as-is
 4. Reads the response — pulls out token counts from the `usage` field
 5. Calculates the dollar cost using embedded pricing data
-6. Logs everything to a local SQLite database (`~/.costwatch/data.db`)
+6. Logs everything to a local SQLite database (`~/.tirith/data.db`)
 7. Returns the original response to your app, unmodified
 
 Your app doesn't know the proxy exists. It gets the same response it would from Anthropic directly.
@@ -33,8 +33,8 @@ Supports both regular (wait for full response) and streaming (SSE) calls.
 
 Small packages that make setup even easier — instead of changing env vars, you just add one import line.
 
-- **Python** (`sdks/python/`) — `import costwatch` at the top of your app, and all Anthropic/OpenAI client instances automatically route through the proxy.
-- **TypeScript** (`sdks/typescript/`) — `import "costwatch"` does the same for Node.js apps.
+- **Python** (`sdks/python/`) — `import tirith` at the top of your app, and all Anthropic/OpenAI client instances automatically route through the proxy.
+- **TypeScript** (`sdks/typescript/`) — `import "tirith"` does the same for Node.js apps.
 
 These are not published to PyPI/npm yet. For now they'd be installed locally with `pip install -e ./sdks/python`.
 
@@ -48,7 +48,7 @@ Calculates cost in cents (integers, not floats) to avoid rounding issues.
 
 ### Local Storage
 
-SQLite database at `~/.costwatch/data.db`. Stores every API call with: timestamp, provider, model, token counts (input/output/cache), cost, latency, status code, tags, and environment label.
+SQLite database at `~/.tirith/data.db`. Stores every API call with: timestamp, provider, model, token counts (input/output/cache), cost, latency, status code, tags, and environment label.
 
 ---
 
@@ -70,15 +70,15 @@ We haven't sent a real API call through the proxy yet. Need to:
 1. Start the proxy
 2. Make a real Anthropic API call pointed at `localhost:5555`
 3. Confirm the response comes back correctly
-4. Run `./costwatch report` and see the cost show up
+4. Run `./tirith report` and see the cost show up
 
 ### PID-based stop
 
-`./costwatch stop` should write/read a PID file so it can actually stop the proxy, instead of telling you to Ctrl+C.
+`./tirith stop` should write/read a PID file so it can actually stop the proxy, instead of telling you to Ctrl+C.
 
 ### Global install
 
-Right now the binary only exists in this directory. For it to work as `costwatch` from anywhere, it needs to be either:
+Right now the binary only exists in this directory. For it to work as `tirith` from anywhere, it needs to be either:
 - Copied to `/usr/local/bin/`
 - Installed via `go install`
 - Published via Homebrew or npm
@@ -122,18 +122,18 @@ Options:
 
 ### Step 4: Embed and serve dashboard (30 min)
 
-Use Go's `embed` package to bundle the frontend files into the binary. Serve them from `localhost:5556` when you run `./costwatch dashboard` or automatically alongside the proxy.
+Use Go's `embed` package to bundle the frontend files into the binary. Serve them from `localhost:5556` when you run `./tirith dashboard` or automatically alongside the proxy.
 
 ### Step 5: Python SDK wrapper test (15 min)
 
-Install the wrapper locally (`pip install -e ./sdks/python`), write a small test script that imports `costwatch` then uses the Anthropic SDK normally, confirm calls route through the proxy.
+Install the wrapper locally (`pip install -e ./sdks/python`), write a small test script that imports `tirith` then uses the Anthropic SDK normally, confirm calls route through the proxy.
 
 ### Step 6: Polish (30 min)
 
-- PID file for `costwatch stop`
+- PID file for `tirith stop`
 - Nicer startup banner
 - Error messages when proxy port is already in use
-- `costwatch report --last 24h` formatting
+- `tirith report --last 24h` formatting
 
 ---
 
@@ -143,14 +143,14 @@ From this directory:
 
 ```bash
 # Terminal 1: Start the proxy
-./costwatch start
+./tirith start
 
 # Terminal 2: Send a test API call through the proxy
 curl -X POST http://localhost:5555/v1/messages \
   -H "Content-Type: application/json" \
   -H "x-api-key: YOUR_ANTHROPIC_API_KEY" \
   -H "anthropic-version: 2023-06-01" \
-  -H "X-CostWatch-Tag: test" \
+  -H "X-Tirith-Tag: test" \
   -d '{
     "model": "claude-haiku-4-5-20251001",
     "max_tokens": 50,
@@ -158,7 +158,7 @@ curl -X POST http://localhost:5555/v1/messages \
   }'
 
 # Terminal 2: Check the report
-./costwatch report
+./tirith report
 ```
 
 If the API call works, the report should show the cost of that one call.
@@ -169,7 +169,7 @@ If the API call works, the report should show the cost of that one call.
 
 | File | What it does |
 |------|-------------|
-| `cmd/costwatch/main.go` | CLI entrypoint — all commands defined here |
+| `cmd/tirith/main.go` | CLI entrypoint — all commands defined here |
 | `internal/proxy/server.go` | HTTP server setup, routing |
 | `internal/proxy/handler.go` | Non-streaming Anthropic request handling |
 | `internal/proxy/streaming.go` | SSE streaming Anthropic request handling |
@@ -177,7 +177,7 @@ If the API call works, the report should show the cost of that one call.
 | `internal/storage/schema.go` | SQL table + index definitions |
 | `internal/pricing/engine.go` | Cost calculation from model + tokens |
 | `internal/pricing/pricing.yaml` | Model pricing data |
-| `internal/config/config.go` | Config loading from ~/.costwatch/config.yaml |
+| `internal/config/config.go` | Config loading from ~/.tirith/config.yaml |
 | `internal/report/terminal.go` | Terminal table formatting |
 | `internal/dashboard/` | Empty — dashboard goes here |
 | `sdks/python/` | Python SDK wrapper |

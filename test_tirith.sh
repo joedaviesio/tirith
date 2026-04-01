@@ -57,12 +57,12 @@ class Handler(http.server.BaseHTTPRequestHandler):
         body = json.loads(self.rfile.read(length)) if length else {}
         stream = body.get("stream", False)
 
-        # Verify CostWatch headers are stripped.
-        has_cw = any(k.lower().startswith("x-costwatch-") for k in self.headers)
+        # Verify Tirith headers are stripped.
+        has_cw = any(k.lower().startswith("x-tirith-") for k in self.headers)
         if has_cw:
             self.send_response(500)
             self.end_headers()
-            self.wfile.write(b'{"error":"costwatch headers leaked"}')
+            self.wfile.write(b'{"error":"tirith headers leaked"}')
             return
 
         if stream:
@@ -142,17 +142,17 @@ EOF
 
 # ─── Build Tirith ─────────────────────────────────────────────────────
 echo "Building Tirith..."
-go build -o "$TMPDIR_TEST/tirith_binary" ./cmd/costwatch
+go build -o "$TMPDIR_TEST/tirith_binary" ./cmd/tirith
 
 # ─── Start fake upstream ──────────────────────────────────────────────
 python3 "$TMPDIR_TEST/fake_upstream.py" "$FAKE_PORT" &
 FAKE_PID=$!
 
 # ─── Start Tirith (override config location via HOME trick) ──────────
-# Tirith reads ~/.costwatch/config.yaml — symlink our test config.
+# Tirith reads ~/.tirith/config.yaml — symlink our test config.
 TEST_HOME="$TMPDIR_TEST/home"
-mkdir -p "$TEST_HOME/.costwatch"
-cp "$CONFIG_PATH" "$TEST_HOME/.costwatch/config.yaml"
+mkdir -p "$TEST_HOME/.tirith"
+cp "$CONFIG_PATH" "$TEST_HOME/.tirith/config.yaml"
 
 HOME="$TEST_HOME" "$TMPDIR_TEST/tirith_binary" start --no-open --port "$PROXY_PORT" &
 TIRITH_PID=$!
@@ -219,9 +219,9 @@ fi
 curl -sf -X POST "$PROXY/proxy/anthropic/v1/messages" \
     -H "Content-Type: application/json" \
     -H "x-api-key: fake-key" \
-    -H "X-CostWatch-Tag: test-feature" \
-    -H "X-CostWatch-User: joe" \
-    -H "X-CostWatch-Environment: staging" \
+    -H "X-Tirith-Tag: test-feature" \
+    -H "X-Tirith-User: joe" \
+    -H "X-Tirith-Environment: staging" \
     -d '{"model":"claude-sonnet-4-6","messages":[{"role":"user","content":"tagged"}],"max_tokens":50}' > /dev/null
 
 # Give storage a moment to flush.
@@ -360,8 +360,8 @@ else
     fail "Invalid JSON (expected 400, got $STATUS)"
 fi
 
-# ── Test 10: CostWatch headers stripped before upstream ───────────────
-# The fake upstream returns 500 if it sees any X-CostWatch-* header.
+# ── Test 10: Tirith headers stripped before upstream ───────────────
+# The fake upstream returns 500 if it sees any X-Tirith-* header.
 # We already sent requests with those headers and got 200s, so this is implicitly tested.
 # Verify explicitly by checking that our tagged request (test 4) succeeded.
 TAGGED_CALL=$(echo "$RECENT" | python3 -c "
@@ -371,9 +371,9 @@ tagged = [c for c in calls if c['tag'] == 'test-feature']
 print(tagged[0]['status_code'] if tagged else 'none')
 " 2>/dev/null || echo "none")
 if [ "$TAGGED_CALL" = "200" ]; then
-    pass "CostWatch headers stripped before upstream (tagged call got 200)"
+    pass "Tirith headers stripped before upstream (tagged call got 200)"
 else
-    fail "CostWatch headers may have leaked (status=$TAGGED_CALL)"
+    fail "Tirith headers may have leaked (status=$TAGGED_CALL)"
 fi
 
 # ── Test 11: Localhost binding ────────────────────────────────────────

@@ -63,7 +63,7 @@ func DefaultConfig() *Config {
 		},
 		Storage: StorageConfig{
 			Driver: "sqlite",
-			Path:   filepath.Join(home, ".costwatch", "data.db"),
+			Path:   filepath.Join(home, ".tirith", "data.db"),
 		},
 		Dashboard: DashboardConfig{
 			Host: "127.0.0.1",
@@ -71,14 +71,14 @@ func DefaultConfig() *Config {
 		},
 		Cloud: CloudConfig{
 			Enabled:  false,
-			Endpoint: "https://api.costwatch.dev",
+			Endpoint: "https://api.tirith.dev",
 		},
 	}
 }
 
 func ConfigDir() string {
 	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".costwatch")
+	return filepath.Join(home, ".tirith")
 }
 
 func ConfigPath() string {

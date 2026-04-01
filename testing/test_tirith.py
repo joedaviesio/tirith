@@ -172,9 +172,9 @@ def main():
 
         try:
             extra_headers = {
-                "X-CostWatch-Tag": tag,
-                "X-CostWatch-User": user,
-                "X-CostWatch-Environment": env,
+                "X-Tirith-Tag": tag,
+                "X-Tirith-User": user,
+                "X-Tirith-Environment": env,
             }
 
             if streaming:

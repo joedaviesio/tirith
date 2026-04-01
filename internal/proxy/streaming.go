@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joedaviesio/costwatch/internal/pricing"
-	"github.com/joedaviesio/costwatch/internal/storage"
+	"github.com/joedaviesio/tirith/internal/pricing"
+	"github.com/joedaviesio/tirith/internal/storage"
 )
 
 // SSE event types we care about for token tracking.

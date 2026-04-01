@@ -1,17 +1,17 @@
 # How Monitoring Works
 
-CostWatch is a **transparent proxy**, not a network sniffer. It only sees API calls that are explicitly routed through it.
+Tirith is a **transparent proxy**, not a network sniffer. It only sees API calls that are explicitly routed through it.
 
 ## The proxy model
 
 ```
-Your App  ──▶  CostWatch Proxy (localhost:5555)  ──▶  AI Provider (api.anthropic.com)
+Your App  ──▶  Tirith Proxy (localhost:5555)  ──▶  AI Provider (api.anthropic.com)
           ◀──                                    ◀──
 ```
 
-CostWatch sits in the middle of the request path. When a request passes through, it:
+Tirith sits in the middle of the request path. When a request passes through, it:
 
-1. Reads custom `X-CostWatch-*` headers (tag, user, session, environment) and strips them
+1. Reads custom `X-Tirith-*` headers (tag, user, session, environment) and strips them
 2. Forwards the request to the real AI provider with auth headers intact
 3. Reads the response (or streams SSE chunks in real-time)
 4. Extracts token counts and calculates cost from the `usage` field
@@ -23,10 +23,10 @@ CostWatch sits in the middle of the request path. When a request passes through,
 Only requests that pass through the proxy. A request reaches the proxy when:
 
 - The SDK wrapper patches the client's base URL to `localhost:5555`
-- `costwatch run` injects `*_BASE_URL` env vars into the subprocess
+- `tirith run` injects `*_BASE_URL` env vars into the subprocess
 - You manually set `ANTHROPIC_BASE_URL` (or equivalent) to point at the proxy
 
-If none of these are in place, your app talks directly to the AI provider and CostWatch never sees the traffic.
+If none of these are in place, your app talks directly to the AI provider and Tirith never sees the traffic.
 
 ## What does NOT get monitored
 
@@ -39,7 +39,7 @@ If none of these are in place, your app talks directly to the AI provider and Co
 
 ### Same machine
 
-If two developers share a machine (e.g., a shared dev server), each should run their own proxy on a different port. Their data is isolated in separate SQLite databases at `~/.costwatch/data.db` (one per user home directory).
+If two developers share a machine (e.g., a shared dev server), each should run their own proxy on a different port. Their data is isolated in separate SQLite databases at `~/.tirith/data.db` (one per user home directory).
 
 ### Separate machines
 
@@ -47,11 +47,11 @@ Fully independent. Each dev runs their own proxy, stores their own data, and see
 
 ### Shared visibility
 
-Local mode is single-developer by design. For team-wide dashboards and shared cost data, use CostWatch Cloud (when available), which routes traffic through a hosted proxy and aggregates data across the team.
+Local mode is single-developer by design. For team-wide dashboards and shared cost data, use Tirith Cloud (when available), which routes traffic through a hosted proxy and aggregates data across the team.
 
 ## Privacy
 
-CostWatch logs **metadata only** by default:
+Tirith logs **metadata only** by default:
 
 - Model name, provider
 - Input/output token counts

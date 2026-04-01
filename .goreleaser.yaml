@@ -7,7 +7,7 @@ before:
     - bash -c "cd frontend && npm run build && rm -rf ../internal/dashboard/frontend/* && cp -r out/* ../internal/dashboard/frontend/"
 
 builds:
-  - main: ./cmd/costwatch
+  - main: ./cmd/tirith
     binary: tirith
     ldflags:
       - -s -w -X main.version={{.Version}}

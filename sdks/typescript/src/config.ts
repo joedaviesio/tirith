@@ -16,14 +16,14 @@ export function getProxyUrl(): string {
   }
 
   // Check env var first.
-  const envUrl = process.env.COSTWATCH_PROXY_URL;
+  const envUrl = process.env.TIRITH_PROXY_URL;
   if (envUrl) {
     return envUrl;
   }
 
   // Try to read from config file.
   try {
-    const configPath = join(homedir(), ".costwatch", "config.yaml");
+    const configPath = join(homedir(), ".tirith", "config.yaml");
     const content = readFileSync(configPath, "utf-8");
     // Simple YAML parsing for the port field — avoids a yaml dependency.
     const portMatch = content.match(/^\s*port:\s*(\d+)/m);

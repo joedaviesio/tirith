@@ -1,5 +1,4 @@
 # Go binary
-/costwatch
 *.exe
 
 # IDE
@@ -24,7 +23,7 @@ sdks/typescript/dist/
 # Next.js
 frontend/.next/
 
-# CostWatch data
+# Tirith data
 *.db
 
 # Secrets

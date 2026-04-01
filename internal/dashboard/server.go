@@ -11,7 +11,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/joedaviesio/costwatch/internal/storage"
+	"github.com/joedaviesio/tirith/internal/storage"
 )
 
 //go:embed all:frontend

@@ -17,12 +17,12 @@ def get_proxy_url() -> str:
         return _proxy_url
 
     # Check env var first.
-    env_url = os.environ.get("COSTWATCH_PROXY_URL")
+    env_url = os.environ.get("TIRITH_PROXY_URL")
     if env_url:
         return env_url
 
     # Try to read port from config file (simple regex, avoids yaml dependency).
-    config_path = Path.home() / ".costwatch" / "config.yaml"
+    config_path = Path.home() / ".tirith" / "config.yaml"
     if config_path.exists():
         try:
             content = config_path.read_text()
@@ -57,5 +57,5 @@ def configure(
         _default_tags = default_tags
 
     # Re-patch with new config.
-    from costwatch._patch import patch_all
+    from tirith._patch import patch_all
     patch_all()

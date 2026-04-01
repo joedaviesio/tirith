@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/google/uuid"
-	"github.com/joedaviesio/costwatch/internal/pricing"
-	"github.com/joedaviesio/costwatch/internal/storage"
+	"github.com/joedaviesio/tirith/internal/pricing"
+	"github.com/joedaviesio/tirith/internal/storage"
 )
 
 // anthropicUsage represents the usage object in an Anthropic API response.
@@ -29,18 +29,18 @@ type anthropicResponse struct {
 func (s *Server) handleAnthropic(w http.ResponseWriter, r *http.Request) {
 	start := time.Now()
 
-	// Extract CostWatch headers before stripping them.
-	tag := r.Header.Get("X-CostWatch-Tag")
-	userTag := r.Header.Get("X-CostWatch-User")
-	sessionTag := r.Header.Get("X-CostWatch-Session")
-	environment := r.Header.Get("X-CostWatch-Environment")
+	// Extract Tirith headers before stripping them.
+	tag := r.Header.Get("X-Tirith-Tag")
+	userTag := r.Header.Get("X-Tirith-User")
+	sessionTag := r.Header.Get("X-Tirith-Session")
+	environment := r.Header.Get("X-Tirith-Environment")
 	if environment == "" {
 		environment = "default"
 	}
 
-	// Strip CostWatch headers.
+	// Strip Tirith headers.
 	for key := range r.Header {
-		if strings.HasPrefix(strings.ToLower(key), "x-costwatch-") {
+		if strings.HasPrefix(strings.ToLower(key), "x-tirith-") {
 			r.Header.Del(key)
 		}
 	}

@@ -12,12 +12,12 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/joedaviesio/costwatch/internal/config"
-	"github.com/joedaviesio/costwatch/internal/dashboard"
-	"github.com/joedaviesio/costwatch/internal/pricing"
-	"github.com/joedaviesio/costwatch/internal/proxy"
-	"github.com/joedaviesio/costwatch/internal/report"
-	"github.com/joedaviesio/costwatch/internal/storage"
+	"github.com/joedaviesio/tirith/internal/config"
+	"github.com/joedaviesio/tirith/internal/dashboard"
+	"github.com/joedaviesio/tirith/internal/pricing"
+	"github.com/joedaviesio/tirith/internal/proxy"
+	"github.com/joedaviesio/tirith/internal/report"
+	"github.com/joedaviesio/tirith/internal/storage"
 	"github.com/spf13/cobra"
 )
 

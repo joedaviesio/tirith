@@ -47,11 +47,11 @@ Install the wrapper and add a single import — all AI client calls are automati
 **Python:**
 
 ```bash
-pip install costwatch
+pip install tirith
 ```
 
 ```python
-import costwatch  # add this line — that's it
+import tirith  # add this line — that's it
 import anthropic
 
 client = anthropic.Anthropic()
@@ -61,11 +61,11 @@ client = anthropic.Anthropic()
 **TypeScript:**
 
 ```bash
-npm install costwatch
+npm install tirith
 ```
 
 ```typescript
-import "costwatch"; // add this line — that's it
+import "tirith"; // add this line — that's it
 import Anthropic from "@anthropic-ai/sdk";
 
 const client = new Anthropic();
@@ -102,7 +102,7 @@ tirith report --tag grant-scanner
 
 ## 5. Per-developer data
 
-Each developer gets their own SQLite database at `~/.costwatch/data.db`. There is no shared state between developers in local mode — everyone sees only their own usage.
+Each developer gets their own SQLite database at `~/.tirith/data.db`. There is no shared state between developers in local mode — everyone sees only their own usage.
 
 ## Adding tags
 
@@ -114,9 +114,9 @@ client.messages.create(
     max_tokens=1024,
     messages=[{"role": "user", "content": "Hello"}],
     extra_headers={
-        "X-CostWatch-Tag": "grant-scanner",
-        "X-CostWatch-User": "joe",
-        "X-CostWatch-Environment": "dev",
+        "X-Tirith-Tag": "grant-scanner",
+        "X-Tirith-User": "joe",
+        "X-Tirith-Environment": "dev",
     },
 )
 ```
