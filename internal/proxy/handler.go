@@ -45,13 +45,18 @@ func (s *Server) handleAnthropic(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Check if client wants streaming.
-	bodyBytes, err := io.ReadAll(r.Body)
+	// Read request body with a 10MB size limit to prevent memory exhaustion.
+	const maxBodySize = 10 << 20 // 10MB
+	bodyBytes, err := io.ReadAll(io.LimitReader(r.Body, maxBodySize+1))
 	if err != nil {
 		http.Error(w, "failed to read request body", http.StatusBadRequest)
 		return
 	}
 	r.Body.Close()
+	if len(bodyBytes) > maxBodySize {
+		http.Error(w, "request body too large", http.StatusRequestEntityTooLarge)
+		return
+	}
 
 	var reqBody map[string]interface{}
 	if err := json.Unmarshal(bodyBytes, &reqBody); err != nil {

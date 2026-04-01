@@ -1,39 +1,40 @@
 # Team Setup Guide
 
-How to get each developer on your team running CostWatch locally.
+How to get each developer on your team running Tirith locally.
 
 ## Prerequisites
 
-- Go 1.21+ (to build from source) or a prebuilt binary
 - Python 3.8+ and/or Node.js 18+ (for SDK wrappers)
 
 ## 1. Install the CLI
 
-Each developer installs CostWatch on their own machine:
+Each developer installs Tirith on their own machine:
 
 ```bash
-# From source
-git clone <repo-url> && cd costwatch
-go build -o costwatch ./cmd/costwatch
-mv costwatch /usr/local/bin/
-
-# Or via Homebrew (when published)
-brew install costwatch
+brew install joedaviesio/tap/tirith
 ```
 
-## 2. Start the proxy
+## 2. Start Tirith
 
 ```bash
-costwatch start
+tirith
 ```
 
-This starts the proxy on `localhost:5555` by default. Each developer runs their own independent instance.
+That's it. This starts the proxy on `localhost:5555`, the dashboard on `localhost:5556`, and opens the dashboard in your browser automatically.
+
+To start without opening the browser:
+
+```bash
+tirith --no-open
+```
 
 To use a custom port:
 
 ```bash
-costwatch start --port 5678
+tirith start --port 5678
 ```
+
+Stop with `Ctrl+C`.
 
 ## 3. Connect your app
 
@@ -73,11 +74,11 @@ const client = new Anthropic();
 
 ### Option B: CLI wrapper
 
-Wrap your run command — CostWatch injects the right env vars automatically:
+Wrap your run command — Tirith injects the right env vars automatically:
 
 ```bash
-costwatch run -- python app.py
-costwatch run -- node server.js
+tirith run -- python app.py
+tirith run -- node server.js
 ```
 
 ### Option C: Manual env vars
@@ -91,14 +92,12 @@ python app.py
 
 ## 4. View your data
 
-```bash
-# Terminal report
-costwatch report
-costwatch report --last 7d
-costwatch report --tag grant-scanner
+The dashboard opens automatically when you run `tirith`. You can also view data in the terminal:
 
-# Local dashboard
-costwatch dashboard
+```bash
+tirith report
+tirith report --last 7d
+tirith report --tag grant-scanner
 ```
 
 ## 5. Per-developer data

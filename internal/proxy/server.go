@@ -52,9 +52,12 @@ func NewServer(cfg *config.Config, store *storage.Store, pricer *pricing.Engine,
 		fmt.Fprint(w, "ok")
 	})
 
+	dashboardOrigin := fmt.Sprintf("http://%s:%d", cfg.Dashboard.Host, cfg.Dashboard.Port)
+
 	s.httpSrv = &http.Server{
-		Addr:    fmt.Sprintf(":%d", cfg.Proxy.Port),
-		Handler: mux,
+		Addr:              fmt.Sprintf("%s:%d", cfg.Proxy.Host, cfg.Proxy.Port),
+		Handler:           corsMiddleware(mux, dashboardOrigin),
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	return s
@@ -77,4 +80,17 @@ func (s *Server) Shutdown() error {
 
 func (s *Server) Addr() string {
 	return s.httpSrv.Addr
+}
+
+func corsMiddleware(next http.Handler, allowedOrigin string) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Access-Control-Allow-Origin", allowedOrigin)
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+		if r.Method == "OPTIONS" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
 }

@@ -24,7 +24,7 @@ type Server struct {
 	port    int
 }
 
-func NewServer(port int, store *storage.Store, logger *slog.Logger) *Server {
+func NewServer(host string, port int, store *storage.Store, logger *slog.Logger) *Server {
 	s := &Server{
 		store:  store,
 		logger: logger,
@@ -48,24 +48,12 @@ func NewServer(port int, store *storage.Store, logger *slog.Logger) *Server {
 	mux.Handle("/", http.FileServer(http.FS(frontendContent)))
 
 	s.httpSrv = &http.Server{
-		Addr:    fmt.Sprintf(":%d", port),
-		Handler: corsMiddleware(mux),
+		Addr:              fmt.Sprintf("%s:%d", host, port),
+		Handler:           mux,
+		ReadHeaderTimeout: 10 * time.Second,
 	}
 
 	return s
-}
-
-func corsMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
 }
 
 func (s *Server) Start() error {

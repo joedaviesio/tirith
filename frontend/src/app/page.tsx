@@ -14,10 +14,9 @@ export default function DashboardPage() {
   const [proxyActive, setProxyActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter state
-  const [timeRange, setTimeRange] = useState("30d");
+  // Filter state — default to last hour for real-time focus
+  const [timeRange, setTimeRange] = useState("1h");
   const [selectedModel, setSelectedModel] = useState("");
-  const [groupBy, setGroupBy] = useState<"model" | "total">("model");
 
   useEffect(() => {
     const controller = new AbortController();
@@ -44,7 +43,8 @@ export default function DashboardPage() {
     };
 
     load();
-    interval = setInterval(load, 60_000);
+    // Refresh every 10s for near real-time feel
+    interval = setInterval(load, 10_000);
 
     return () => {
       controller.abort();
@@ -80,12 +80,6 @@ export default function DashboardPage() {
 
   const { overview } = data;
 
-  function formatTokens(n: number): string {
-    if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
-    if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
-    return n.toString();
-  }
-
   return (
     <div className="min-h-screen bg-[var(--color-bg)]">
       <Header proxyActive={proxyActive} />
@@ -99,28 +93,24 @@ export default function DashboardPage() {
             onModelChange={setSelectedModel}
             timeRange={timeRange}
             onTimeRangeChange={setTimeRange}
-            groupBy={groupBy}
-            onGroupByChange={setGroupBy}
           />
         </div>
 
-        {/* Stat Cards */}
+        {/* Stat Cards — just spend and calls, kept simple */}
         <div className="flex gap-4 mb-6 flex-wrap">
           <StatCard
-            label="Total tokens in"
-            value={formatTokens(overview.total_input)}
-          />
-          <StatCard
-            label="Total tokens out"
-            value={formatTokens(overview.total_output)}
-          />
-          <StatCard
-            label="Total cost"
+            label="Total spend"
             value={`$${overview.total_cost.toFixed(2)}`}
+            sub={`${overview.total_input.toLocaleString()} tokens in, ${overview.total_output.toLocaleString()} out`}
           />
           <StatCard
-            label="Total calls"
+            label="API calls"
             value={overview.total_calls.toLocaleString()}
+            sub={
+              overview.avg_latency > 0
+                ? `${overview.avg_latency < 1000 ? `${Math.round(overview.avg_latency)}ms` : `${(overview.avg_latency / 1000).toFixed(1)}s`} avg response time`
+                : undefined
+            }
           />
         </div>
 
@@ -128,12 +118,12 @@ export default function DashboardPage() {
         <div className="mb-6">
           <UsageChart
             daily={data.daily}
-            dailyByModel={data.daily_by_model}
-            groupBy={groupBy}
+            calls={data.calls}
+            timeRange={timeRange}
           />
         </div>
 
-        {/* Logs */}
+        {/* Recent Calls */}
         <LogsTable calls={data.calls} />
       </div>
     </div>

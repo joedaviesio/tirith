@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   AreaChart,
   Area,
@@ -11,64 +11,83 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend,
 } from "recharts";
-import { DailyData, DailyModelData } from "@/lib/types";
-import { getModelColor, getModelShortName } from "@/lib/constants";
+import { DailyData, CallLog } from "@/lib/types";
 import { CustomTooltip } from "./custom-tooltip";
-
-type ChartView = "tokens" | "cost";
 
 interface Props {
   daily: DailyData[];
-  dailyByModel: DailyModelData[];
-  groupBy: "model" | "total";
+  calls: CallLog[];
+  timeRange: string;
 }
 
-export function UsageChart({ daily, dailyByModel, groupBy }: Props) {
-  const [view, setView] = useState<ChartView>("tokens");
+interface BucketData {
+  label: string;
+  cost: number;
+  calls: number;
+}
 
-  // Pivot daily-by-model data into stacked format: { date, model1: value, model2: value, ... }
-  const { stackedData, modelKeys } = useMemo(() => {
-    const byDate: Record<string, Record<string, number>> = {};
-    const allModels = new Set<string>();
+export function UsageChart({ daily, calls, timeRange }: Props) {
+  // For "1h" view, bucket calls into 5-minute intervals
+  const hourlyBuckets = useMemo((): BucketData[] => {
+    if (timeRange !== "1h") return [];
 
-    for (const d of dailyByModel) {
-      if (!byDate[d.date]) byDate[d.date] = {};
-      allModels.add(d.model);
-      const val =
-        view === "cost"
-          ? d.cost
-          : d.input_tokens + d.output_tokens;
-      byDate[d.date][d.model] = (byDate[d.date][d.model] || 0) + val;
+    const now = new Date();
+    const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+    const buckets: BucketData[] = [];
+
+    // Create 12 five-minute buckets
+    for (let i = 0; i < 12; i++) {
+      const bucketStart = new Date(oneHourAgo.getTime() + i * 5 * 60 * 1000);
+      buckets.push({
+        label: bucketStart.toLocaleTimeString("en-US", {
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }),
+        cost: 0,
+        calls: 0,
+      });
     }
 
-    const modelKeys = Array.from(allModels);
-    const stackedData = Object.entries(byDate).map(([date, models]) => ({
-      date,
-      ...models,
-    }));
+    // Assign calls to buckets
+    for (const call of calls) {
+      const callTime = new Date(call.timestamp);
+      if (callTime < oneHourAgo) continue;
+      const minutesSinceStart =
+        (callTime.getTime() - oneHourAgo.getTime()) / (1000 * 60);
+      const bucketIndex = Math.min(11, Math.floor(minutesSinceStart / 5));
+      buckets[bucketIndex].cost += call.cost_cents / 100;
+      buckets[bucketIndex].calls += 1;
+    }
 
-    return { stackedData, modelKeys };
-  }, [dailyByModel, view]);
+    return buckets;
+  }, [calls, timeRange]);
+
+  const chartData = timeRange === "1h" ? hourlyBuckets : daily;
+  const dataKey = timeRange === "1h" ? "label" : "date";
 
   const formatValue = (v: number) => {
-    if (view === "cost") return `$${v.toFixed(2)}`;
-    if (v >= 1_000_000) return `${(v / 1_000_000).toFixed(1)}M`;
-    if (v >= 1_000) return `${(v / 1_000).toFixed(0)}K`;
-    return v.toString();
+    if (v >= 1) return `$${v.toFixed(2)}`;
+    if (v > 0) return `$${v.toFixed(3)}`;
+    return "$0";
   };
 
   const tooltipFormatter = (value: number, name: string) => {
-    if (view === "cost") return `$${value.toFixed(2)}`;
-    return value.toLocaleString() + " tokens";
+    if (name === "calls" || name === "Calls") return `${value}`;
+    return `$${value.toFixed(4)}`;
   };
 
-  if (daily.length === 0) {
+  const isEmpty =
+    timeRange === "1h"
+      ? hourlyBuckets.every((b) => b.calls === 0)
+      : daily.length === 0;
+
+  if (isEmpty) {
     return (
       <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-center py-16 text-[var(--color-text-tertiary)] text-sm">
-          No data yet. Make API calls through the proxy to see usage here.
+          No activity yet. Make API calls through the proxy to see spend here.
         </div>
       </div>
     );
@@ -76,49 +95,23 @@ export function UsageChart({ daily, dailyByModel, groupBy }: Props) {
 
   return (
     <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
-      {/* Header with toggle */}
       <div className="flex items-center justify-between mb-1">
         <div className="text-[15px] font-semibold text-[var(--color-text-primary)]">
-          {view === "tokens" ? "Token usage" : "Daily token cost"}
+          Spend over time
         </div>
-        <div className="flex items-center gap-1">
-          <span className="text-[13px] text-[var(--color-text-secondary)] mr-2">
-            Choose view
-          </span>
-          {(
-            [
-              { key: "tokens", label: "Token usage" },
-              { key: "cost", label: "Cost" },
-            ] as const
-          ).map((t) => (
-            <button
-              key={t.key}
-              onClick={() => setView(t.key)}
-              className="px-3 py-1.5 rounded-full text-[13px] font-medium cursor-pointer transition-all"
-              style={{
-                border:
-                  view === t.key
-                    ? "1.5px solid var(--color-border-active)"
-                    : "1.5px solid var(--color-border-light)",
-                background:
-                  view === t.key
-                    ? "var(--color-surface)"
-                    : "var(--color-surface-alt)",
-                color: "var(--color-text-primary)",
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
+        <div className="text-[13px] text-[var(--color-text-tertiary)]">
+          {timeRange === "1h"
+            ? "5-minute intervals"
+            : "Daily totals"}
         </div>
       </div>
       <div className="text-[13px] text-[var(--color-text-tertiary)] mb-4">
-        Includes usage from all API calls through the proxy
+        Cost in USD for all API calls through the proxy
       </div>
 
-      <ResponsiveContainer width="100%" height={320}>
-        {groupBy === "model" && stackedData.length > 0 ? (
-          <BarChart data={stackedData}>
+      <ResponsiveContainer width="100%" height={280}>
+        {timeRange === "1h" ? (
+          <BarChart data={hourlyBuckets}>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="var(--chart-gridline)"
@@ -126,7 +119,7 @@ export function UsageChart({ daily, dailyByModel, groupBy }: Props) {
               vertical={false}
             />
             <XAxis
-              dataKey="date"
+              dataKey="label"
               tick={{ fill: "#666666", fontSize: 12 }}
               axisLine={false}
               tickLine={false}
@@ -138,24 +131,15 @@ export function UsageChart({ daily, dailyByModel, groupBy }: Props) {
               tickFormatter={formatValue}
             />
             <Tooltip
-              content={
-                <CustomTooltip formatter={tooltipFormatter} />
-              }
+              content={<CustomTooltip formatter={tooltipFormatter} />}
             />
-            <Legend
-              formatter={(value: string) => getModelShortName(value)}
-              wrapperStyle={{ fontSize: 12, color: "#666666" }}
+            <Bar
+              dataKey="cost"
+              name="Spend"
+              fill="var(--chart-line)"
+              radius={[4, 4, 0, 0]}
+              opacity={0.85}
             />
-            {modelKeys.map((model) => (
-              <Bar
-                key={model}
-                dataKey={model}
-                name={model}
-                stackId="a"
-                fill={getModelColor(model)}
-                radius={[0, 0, 0, 0]}
-              />
-            ))}
           </BarChart>
         ) : (
           <AreaChart data={daily}>
@@ -184,42 +168,19 @@ export function UsageChart({ daily, dailyByModel, groupBy }: Props) {
               tickFormatter={formatValue}
             />
             <Tooltip
-              content={
-                <CustomTooltip formatter={tooltipFormatter} />
-              }
+              content={<CustomTooltip formatter={tooltipFormatter} />}
             />
-            {view === "tokens" ? (
-              <Area
-                type="monotone"
-                dataKey="input_tokens"
-                stroke="var(--chart-line)"
-                strokeWidth={2}
-                fill="url(#areaFill)"
-                name="Tokens"
-              />
-            ) : (
-              <Area
-                type="monotone"
-                dataKey="cost"
-                stroke="var(--chart-line)"
-                strokeWidth={2}
-                fill="url(#areaFill)"
-                name="Cost"
-              />
-            )}
+            <Area
+              type="monotone"
+              dataKey="cost"
+              stroke="var(--chart-line)"
+              strokeWidth={2}
+              fill="url(#areaFill)"
+              name="Spend"
+            />
           </AreaChart>
         )}
       </ResponsiveContainer>
-
-      {/* Footnote */}
-      <div className="mt-4 pt-3 border-t border-[var(--color-border)] flex items-center gap-2 text-[13px] text-[var(--color-text-tertiary)]">
-        <span>&#9432;</span>
-        <span>
-          {view === "tokens"
-            ? "Shows total input tokens per day"
-            : "Shows total cost in USD per day"}
-        </span>
-      </div>
     </div>
   );
 }

@@ -136,13 +136,15 @@ func (s *Store) GetSummary(f ReportFilter) (*Summary, error) {
 		FROM api_calls %s`, where)
 
 	var sum Summary
+	var avgLatency float64
 	err := s.db.QueryRow(query, args...).Scan(
 		&sum.TotalCostCents, &sum.TotalCalls,
-		&sum.TotalInput, &sum.TotalOutput, &sum.AvgLatencyMs,
+		&sum.TotalInput, &sum.TotalOutput, &avgLatency,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("querying summary: %w", err)
 	}
+	sum.AvgLatencyMs = int(avgLatency)
 	return &sum, nil
 }
 
@@ -167,10 +169,12 @@ func (s *Store) GetByModel(f ReportFilter) ([]ModelSummary, error) {
 	var results []ModelSummary
 	for rows.Next() {
 		var m ModelSummary
+		var avgLatency float64
 		if err := rows.Scan(&m.Model, &m.Provider, &m.TotalCostCents, &m.TotalCalls,
-			&m.TotalInput, &m.TotalOutput, &m.AvgLatencyMs); err != nil {
+			&m.TotalInput, &m.TotalOutput, &avgLatency); err != nil {
 			return nil, fmt.Errorf("scanning model row: %w", err)
 		}
+		m.AvgLatencyMs = int(avgLatency)
 		results = append(results, m)
 	}
 	return results, rows.Err()
@@ -196,10 +200,13 @@ func (s *Store) GetByTag(f ReportFilter) ([]TagSummary, error) {
 	var results []TagSummary
 	for rows.Next() {
 		var t TagSummary
+		var avgCost, avgLatency float64
 		if err := rows.Scan(&t.Tag, &t.TotalCostCents, &t.TotalCalls,
-			&t.AvgCostCents, &t.AvgLatencyMs); err != nil {
+			&avgCost, &avgLatency); err != nil {
 			return nil, fmt.Errorf("scanning tag row: %w", err)
 		}
+		t.AvgCostCents = int(avgCost)
+		t.AvgLatencyMs = int(avgLatency)
 		results = append(results, t)
 	}
 	return results, rows.Err()

@@ -76,15 +76,15 @@ func runStart(port int, openBrowser bool) error {
 		return fmt.Errorf("initializing pricing engine: %w", err)
 	}
 
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 
 	srv := proxy.NewServer(cfg, store, pricer, logger)
 
 	// Start dashboard alongside proxy.
-	dash := dashboard.NewServer(cfg.Dashboard.Port, store, logger)
+	dash := dashboard.NewServer(cfg.Dashboard.Host, cfg.Dashboard.Port, store, logger)
 	go func() {
 		if err := dash.Start(); err != nil && err.Error() != "http: Server closed" {
-			logger.Error("dashboard error", "error", err)
+			fmt.Fprintf(os.Stderr, "Dashboard failed to start: %s\n", err)
 		}
 	}()
 
@@ -94,17 +94,20 @@ func runStart(port int, openBrowser bool) error {
 
 	go func() {
 		<-sigCh
-		fmt.Fprintln(os.Stderr, "\nshutting down...")
+		// Restore default signal behavior so a second Ctrl+C force-kills.
+		signal.Stop(sigCh)
+		fmt.Fprintln(os.Stderr, "\nStopping Tirith... bye!")
 		dash.Shutdown()
 		srv.Shutdown()
 	}()
 
 	dashURL := fmt.Sprintf("http://localhost:%d", cfg.Dashboard.Port)
 
-	fmt.Fprintf(os.Stderr, "Tirith proxy listening on http://localhost:%d\n", cfg.Proxy.Port)
-	fmt.Fprintf(os.Stderr, "  Anthropic: http://localhost:%d/proxy/anthropic\n", cfg.Proxy.Port)
-	fmt.Fprintf(os.Stderr, "  Auto-detect: http://localhost:%d/v1/messages\n", cfg.Proxy.Port)
-	fmt.Fprintf(os.Stderr, "  Dashboard: %s\n\n", dashURL)
+	fmt.Fprintln(os.Stderr)
+	fmt.Fprintln(os.Stderr, "  Tirith is running.")
+	fmt.Fprintf(os.Stderr, "  Dashboard: %s\n", dashURL)
+	fmt.Fprintln(os.Stderr, "  Press Ctrl+C to stop.")
+	fmt.Fprintln(os.Stderr)
 
 	if openBrowser {
 		go func() {
@@ -169,15 +172,7 @@ func stopCmd() *cobra.Command {
 		Use:   "stop",
 		Short: "Stop the Tirith proxy server",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cfg, err := config.Load()
-			if err != nil {
-				return err
-			}
-
-			// Send a request to the proxy to trigger shutdown.
-			// For MVP, we just tell the user to Ctrl+C.
-			fmt.Fprintf(os.Stderr, "To stop Tirith, press Ctrl+C in the terminal running 'tirith start'\n")
-			fmt.Fprintf(os.Stderr, "Or: kill $(lsof -ti :%d)\n", cfg.Proxy.Port)
+			fmt.Fprintln(os.Stderr, "To stop Tirith, press Ctrl+C in the terminal where it's running.")
 			return nil
 		},
 	}
@@ -194,7 +189,7 @@ func dashboardCmd() *cobra.Command {
 			}
 
 			url := fmt.Sprintf("http://localhost:%d", cfg.Dashboard.Port)
-			fmt.Fprintf(os.Stderr, "Opening dashboard at %s\n", url)
+			fmt.Fprintln(os.Stderr, "Opening dashboard...")
 
 			openURL(url)
 			return nil
@@ -294,14 +289,14 @@ func runCmd() *cobra.Command {
 				return fmt.Errorf("initializing pricing engine: %w", err)
 			}
 
-			logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelInfo}))
+			logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{Level: slog.LevelError}))
 
 			srv := proxy.NewServer(cfg, store, pricer, logger)
 
 			// Start proxy in background.
 			go func() {
 				if err := srv.Start(); err != nil && err.Error() != "http: Server closed" {
-					logger.Error("proxy error", "error", err)
+					fmt.Fprintf(os.Stderr, "Proxy failed to start: %s\n", err)
 				}
 			}()
 
@@ -320,7 +315,7 @@ func runCmd() *cobra.Command {
 				fmt.Sprintf("OPENAI_BASE_URL=%s/proxy/openai", proxyBase),
 			)
 
-			fmt.Fprintf(os.Stderr, "Tirith: proxy on %s, running: %s\n", proxyBase, strings.Join(args, " "))
+			fmt.Fprintf(os.Stderr, "Tirith tracking costs. Running: %s\n", strings.Join(args, " "))
 
 			err = child.Run()
 

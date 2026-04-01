@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CallLog } from "@/lib/types";
+import { getModelShortName } from "@/lib/constants";
 
 interface Props {
   calls: CallLog[];
@@ -18,42 +19,54 @@ export function LogsTable({ calls }: Props) {
     return (
       <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
         <div className="text-[15px] font-semibold text-[var(--color-text-primary)] mb-4">
-          Logs
+          Recent calls
         </div>
         <div className="flex items-center justify-center py-12 text-[var(--color-text-tertiary)] text-sm">
-          No API calls logged yet.
+          No API calls yet.
         </div>
       </div>
     );
   }
 
-  function formatTimestamp(ts: string): string {
+  function formatTime(ts: string): string {
     const d = new Date(ts);
-    return d.toLocaleString("en-US", {
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-      hour: "2-digit",
+    const now = new Date();
+    const diffMs = now.getTime() - d.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins}m ago`;
+
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+
+    return d.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "numeric",
       minute: "2-digit",
-      second: "2-digit",
-      hour12: false,
     });
   }
 
-  function truncateId(id: string): string {
-    if (id.length <= 20) return id;
-    return id.slice(0, 20) + "...";
+  function formatCost(cents: number): string {
+    const dollars = cents / 100;
+    if (dollars >= 1) return `$${dollars.toFixed(2)}`;
+    if (dollars >= 0.01) return `$${dollars.toFixed(3)}`;
+    if (dollars > 0) return `$${dollars.toFixed(4)}`;
+    return "$0.00";
+  }
+
+  function formatLatency(ms: number): string {
+    if (ms < 1000) return `${ms}ms`;
+    return `${(ms / 1000).toFixed(1)}s`;
   }
 
   return (
     <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]">
       {/* Header */}
-      <div className="px-6 py-4 flex items-center justify-between border-b border-[var(--color-border)]">
+      <div className="px-6 py-4 border-b border-[var(--color-border)]">
         <div className="text-[15px] font-semibold text-[var(--color-text-primary)]">
-          Logs
-        </div>
-        <div className="text-xs text-[var(--color-text-tertiary)]">
-          Last refresh: {new Date().toLocaleString()}
+          Recent calls
         </div>
       </div>
 
@@ -62,19 +75,10 @@ export function LogsTable({ calls }: Props) {
         <table className="w-full border-collapse text-[13px]">
           <thead>
             <tr className="border-b border-[var(--color-border)]">
-              {[
-                "TIME",
-                "ID",
-                "MODEL",
-                "INPUT TOKENS",
-                "OUTPUT TOKENS",
-                "TYPE",
-                "SERVICE TIER",
-                "REQUEST",
-              ].map((h) => (
+              {["WHEN", "MODEL", "COST", "SPEED"].map((h) => (
                 <th
                   key={h}
-                  className="px-4 py-3 text-left text-[11px] font-medium text-[var(--color-text-tertiary)] uppercase tracking-wider"
+                  className="px-6 py-3 text-left text-[11px] font-medium text-[var(--color-text-tertiary)] uppercase tracking-wider"
                 >
                   {h}
                 </th>
@@ -87,29 +91,17 @@ export function LogsTable({ calls }: Props) {
                 key={c.id}
                 className="border-b border-[var(--color-border-light)] hover:bg-[var(--color-surface-alt)] transition-colors"
               >
-                <td className="px-4 py-3 text-[var(--color-text-secondary)] whitespace-nowrap font-tabular">
-                  {formatTimestamp(c.timestamp)}
+                <td className="px-6 py-3.5 text-[var(--color-text-secondary)] whitespace-nowrap">
+                  {formatTime(c.timestamp)}
                 </td>
-                <td className="px-4 py-3 text-[var(--color-text-secondary)] font-mono text-xs">
-                  {truncateId(c.id)}
+                <td className="px-6 py-3.5 text-[var(--color-text-primary)] whitespace-nowrap">
+                  {getModelShortName(c.model)}
                 </td>
-                <td className="px-4 py-3 text-[var(--color-text-primary)] whitespace-nowrap">
-                  {c.model}
+                <td className="px-6 py-3.5 text-[var(--color-text-primary)] font-tabular font-medium">
+                  {formatCost(c.cost_cents)}
                 </td>
-                <td className="px-4 py-3 text-[var(--color-text-primary)] font-tabular">
-                  {c.input_tokens.toLocaleString()}
-                </td>
-                <td className="px-4 py-3 text-[var(--color-text-primary)] font-tabular">
-                  {c.output_tokens.toLocaleString()}
-                </td>
-                <td className="px-4 py-3 text-[var(--color-text-secondary)]">
-                  {c.streaming ? "Streaming" : "HTTP"}
-                </td>
-                <td className="px-4 py-3 text-[var(--color-text-secondary)]">
-                  Standard
-                </td>
-                <td className="px-4 py-3 text-[var(--color-text-secondary)]">
-                  {c.streaming ? "Streaming" : "HTTP"}
+                <td className="px-6 py-3.5 text-[var(--color-text-secondary)] font-tabular">
+                  {formatLatency(c.latency_ms)}
                 </td>
               </tr>
             ))}
@@ -118,32 +110,29 @@ export function LogsTable({ calls }: Props) {
       </div>
 
       {/* Pagination */}
-      <div className="px-6 py-3 flex items-center justify-between border-t border-[var(--color-border)]">
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setPage(Math.max(0, page - 1))}
-            disabled={page === 0}
-            className="w-8 h-8 flex items-center justify-center rounded-md border border-[var(--color-border-light)] text-[var(--color-text-secondary)] disabled:opacity-30 cursor-pointer disabled:cursor-default hover:bg-[var(--color-surface-alt)]"
-          >
-            &larr;
-          </button>
-          <button
-            onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
-            disabled={page >= totalPages - 1}
-            className="w-8 h-8 flex items-center justify-center rounded-md border border-[var(--color-border-light)] text-[var(--color-text-secondary)] disabled:opacity-30 cursor-pointer disabled:cursor-default hover:bg-[var(--color-surface-alt)]"
-          >
-            &rarr;
-          </button>
+      {totalPages > 1 && (
+        <div className="px-6 py-3 flex items-center justify-between border-t border-[var(--color-border)]">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setPage(Math.max(0, page - 1))}
+              disabled={page === 0}
+              className="w-8 h-8 flex items-center justify-center rounded-md border border-[var(--color-border-light)] text-[var(--color-text-secondary)] disabled:opacity-30 cursor-pointer disabled:cursor-default hover:bg-[var(--color-surface-alt)]"
+            >
+              &larr;
+            </button>
+            <button
+              onClick={() => setPage(Math.min(totalPages - 1, page + 1))}
+              disabled={page >= totalPages - 1}
+              className="w-8 h-8 flex items-center justify-center rounded-md border border-[var(--color-border-light)] text-[var(--color-text-secondary)] disabled:opacity-30 cursor-pointer disabled:cursor-default hover:bg-[var(--color-surface-alt)]"
+            >
+              &rarr;
+            </button>
+          </div>
+          <div className="text-xs text-[var(--color-text-tertiary)]">
+            Page {page + 1} of {totalPages}
+          </div>
         </div>
-        <div className="flex items-center gap-2 text-xs text-[var(--color-text-tertiary)]">
-          <span>
-            LINES PER PAGE
-          </span>
-          <span className="font-medium text-[var(--color-text-primary)]">
-            {PAGE_SIZE}
-          </span>
-        </div>
-      </div>
+      )}
     </div>
   );
 }

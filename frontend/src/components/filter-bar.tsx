@@ -8,15 +8,13 @@ interface Props {
   onModelChange: (model: string) => void;
   timeRange: string;
   onTimeRangeChange: (range: string) => void;
-  groupBy: "model" | "total";
-  onGroupByChange: (group: "model" | "total") => void;
 }
 
 const TIME_RANGES = [
-  { value: "24h", label: "24 hours" },
+  { value: "1h", label: "Last hour" },
+  { value: "24h", label: "Today" },
   { value: "7d", label: "7 days" },
-  { value: "30d", label: "Month to date" },
-  { value: "90d", label: "90 days" },
+  { value: "30d", label: "30 days" },
 ];
 
 export function FilterBar({
@@ -25,8 +23,6 @@ export function FilterBar({
   onModelChange,
   timeRange,
   onTimeRangeChange,
-  groupBy,
-  onGroupByChange,
 }: Props) {
   const [modelOpen, setModelOpen] = useState(false);
   const [modelSearch, setModelSearch] = useState("");
@@ -47,46 +43,33 @@ export function FilterBar({
   );
 
   return (
-    <div className="flex items-center gap-3 flex-wrap">
-      {/* Group By */}
-      <div className="flex items-center gap-2">
-        <span className="text-[13px] text-[var(--color-text-secondary)]">
-          Group by:
-        </span>
-        <button
-          onClick={() => onGroupByChange("model")}
-          className="px-3 py-1.5 rounded-full text-[13px] font-medium cursor-pointer transition-all"
-          style={{
-            border:
-              groupBy === "model"
-                ? "1.5px solid var(--color-border-active)"
-                : "1.5px solid var(--color-border-light)",
-            background:
-              groupBy === "model" ? "var(--color-surface)" : "var(--color-surface-alt)",
-            color: "var(--color-text-primary)",
-          }}
-        >
-          Model
-        </button>
-        <button
-          onClick={() => onGroupByChange("total")}
-          className="px-3 py-1.5 rounded-full text-[13px] font-medium cursor-pointer transition-all"
-          style={{
-            border:
-              groupBy === "total"
-                ? "1.5px solid var(--color-border-active)"
-                : "1.5px solid var(--color-border-light)",
-            background:
-              groupBy === "total" ? "var(--color-surface)" : "var(--color-surface-alt)",
-            color: "var(--color-text-primary)",
-          }}
-        >
-          Total
-        </button>
+    <div className="flex items-center justify-between flex-wrap gap-3">
+      {/* Time Range */}
+      <div className="flex items-center gap-1">
+        {TIME_RANGES.map((tr) => (
+          <button
+            key={tr.value}
+            onClick={() => onTimeRangeChange(tr.value)}
+            className="px-4 py-2 rounded-full text-[14px] font-medium cursor-pointer transition-all"
+            style={{
+              border:
+                timeRange === tr.value
+                  ? "1.5px solid var(--color-border-active)"
+                  : "1.5px solid transparent",
+              background:
+                timeRange === tr.value
+                  ? "var(--color-surface)"
+                  : "transparent",
+              color:
+                timeRange === tr.value
+                  ? "var(--color-text-primary)"
+                  : "var(--color-text-secondary)",
+            }}
+          >
+            {tr.label}
+          </button>
+        ))}
       </div>
-
-      {/* Separator */}
-      <div className="w-px h-5 bg-[var(--color-border)]" />
 
       {/* Model Filter */}
       <div className="relative" ref={modelRef}>
@@ -116,7 +99,7 @@ export function FilterBar({
         </button>
 
         {modelOpen && (
-          <div className="absolute top-full mt-1 left-0 w-64 bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-lg shadow-[var(--shadow-tooltip)] z-50">
+          <div className="absolute top-full mt-1 right-0 w-64 bg-[var(--color-surface)] border border-[var(--color-border-light)] rounded-lg shadow-[var(--shadow-tooltip)] z-50">
             <div className="p-2">
               <input
                 type="text"
@@ -162,36 +145,6 @@ export function FilterBar({
             </div>
           </div>
         )}
-      </div>
-
-      {/* Separator */}
-      <div className="w-px h-5 bg-[var(--color-border)]" />
-
-      {/* Time Range */}
-      <div className="flex items-center gap-1">
-        {TIME_RANGES.map((tr) => (
-          <button
-            key={tr.value}
-            onClick={() => onTimeRangeChange(tr.value)}
-            className="px-3 py-1.5 rounded-full text-[13px] font-medium cursor-pointer transition-all"
-            style={{
-              border:
-                timeRange === tr.value
-                  ? "1.5px solid var(--color-border-active)"
-                  : "1.5px solid transparent",
-              background:
-                timeRange === tr.value
-                  ? "var(--color-surface)"
-                  : "transparent",
-              color:
-                timeRange === tr.value
-                  ? "var(--color-text-primary)"
-                  : "var(--color-text-secondary)",
-            }}
-          >
-            {tr.label}
-          </button>
-        ))}
       </div>
     </div>
   );

@@ -17,8 +17,9 @@ type Config struct {
 }
 
 type ProxyConfig struct {
-	Port      int  `yaml:"port"`
-	LogBodies bool `yaml:"log_bodies"`
+	Host      string `yaml:"host"`
+	Port      int    `yaml:"port"`
+	LogBodies bool   `yaml:"log_bodies"`
 }
 
 type ProvidersConfig struct {
@@ -37,7 +38,8 @@ type StorageConfig struct {
 }
 
 type DashboardConfig struct {
-	Port int `yaml:"port"`
+	Host string `yaml:"host"`
+	Port int    `yaml:"port"`
 }
 
 type CloudConfig struct {
@@ -50,6 +52,7 @@ func DefaultConfig() *Config {
 	home, _ := os.UserHomeDir()
 	return &Config{
 		Proxy: ProxyConfig{
+			Host:      "127.0.0.1",
 			Port:      5555,
 			LogBodies: false,
 		},
@@ -63,6 +66,7 @@ func DefaultConfig() *Config {
 			Path:   filepath.Join(home, ".costwatch", "data.db"),
 		},
 		Dashboard: DashboardConfig{
+			Host: "127.0.0.1",
 			Port: 5556,
 		},
 		Cloud: CloudConfig{
