@@ -304,29 +304,30 @@ else
     fail "Cost tracking (total_cost_cents=$COST, expected >= 1)"
 fi
 
-# ── Test 7: CORS lockdown ────────────────────────────────────────────
-# Proxy should only allow dashboard origin.
-CORS=$(curl -sf -I -X OPTIONS "$PROXY/health" 2>/dev/null | grep -i "access-control-allow-origin" || echo "")
-EXPECTED_ORIGIN="http://127.0.0.1:$DASH_PORT"
-if echo "$CORS" | grep -q "$EXPECTED_ORIGIN"; then
-    pass "Proxy CORS restricted to dashboard origin"
+# ── Test 7: No CORS on proxy or dashboard ─────────────────────────────
+# Proxy should have NO CORS headers (no browser talks to it directly).
+PROXY_CORS=$(curl -sf -I "$PROXY/health" 2>/dev/null | grep -i "access-control-allow-origin" || echo "")
+if [ -z "$PROXY_CORS" ]; then
+    pass "Proxy has no CORS headers (not needed)"
 else
-    fail "Proxy CORS not restricted (got: $CORS)"
+    fail "Proxy still has CORS headers: $PROXY_CORS"
 fi
 
-# Verify it's NOT wildcard.
-if echo "$CORS" | grep -qv "\*"; then
-    pass "Proxy CORS is not wildcard"
-else
-    fail "Proxy CORS is still wildcard"
-fi
-
-# Dashboard should NOT have CORS headers at all.
+# Dashboard should have NO CORS headers (serves its own frontend).
 DASH_CORS=$(curl -sf -I "$DASH/" 2>/dev/null | grep -i "access-control-allow-origin" || echo "")
 if [ -z "$DASH_CORS" ]; then
     pass "Dashboard has no CORS headers"
 else
     fail "Dashboard still has CORS headers: $DASH_CORS"
+fi
+
+# ── Test 7b: Proxy health via dashboard (same-origin endpoint) ────────
+HEALTH_RESP=$(curl -sf "$DASH/api/proxy-health")
+IS_ACTIVE=$(echo "$HEALTH_RESP" | python3 -c "import sys,json; print(json.load(sys.stdin)['active'])" 2>/dev/null || echo "")
+if [ "$IS_ACTIVE" = "True" ]; then
+    pass "Dashboard /api/proxy-health reports proxy active"
+else
+    fail "Dashboard /api/proxy-health (got: $IS_ACTIVE)"
 fi
 
 # ── Test 8: Body size limit (413) ────────────────────────────────────

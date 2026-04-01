@@ -21,7 +21,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version = "0.1.0-dev"
+var version = "2.0.0"
 
 func main() {
 	var noOpen bool
@@ -81,7 +81,8 @@ func runStart(port int, openBrowser bool) error {
 	srv := proxy.NewServer(cfg, store, pricer, logger)
 
 	// Start dashboard alongside proxy.
-	dash := dashboard.NewServer(cfg.Dashboard.Host, cfg.Dashboard.Port, store, logger)
+	proxyURL := fmt.Sprintf("http://%s:%d", cfg.Proxy.Host, cfg.Proxy.Port)
+	dash := dashboard.NewServer(cfg.Dashboard.Host, cfg.Dashboard.Port, proxyURL, store, logger)
 	go func() {
 		if err := dash.Start(); err != nil && err.Error() != "http: Server closed" {
 			fmt.Fprintf(os.Stderr, "Dashboard failed to start: %s\n", err)

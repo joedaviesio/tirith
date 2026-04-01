@@ -18,17 +18,19 @@ import (
 var frontendFS embed.FS
 
 type Server struct {
-	store   *storage.Store
-	httpSrv *http.Server
-	logger  *slog.Logger
-	port    int
+	store    *storage.Store
+	httpSrv  *http.Server
+	logger   *slog.Logger
+	port     int
+	proxyURL string
 }
 
-func NewServer(host string, port int, store *storage.Store, logger *slog.Logger) *Server {
+func NewServer(host string, port int, proxyURL string, store *storage.Store, logger *slog.Logger) *Server {
 	s := &Server{
-		store:  store,
-		logger: logger,
-		port:   port,
+		store:    store,
+		logger:   logger,
+		port:     port,
+		proxyURL: proxyURL,
 	}
 
 	mux := http.NewServeMux()
@@ -42,6 +44,7 @@ func NewServer(host string, port int, store *storage.Store, logger *slog.Logger)
 	mux.HandleFunc("/api/by-user", s.handleByUser)
 	mux.HandleFunc("/api/calls", s.handleCalls)
 	mux.HandleFunc("/api/models", s.handleModels)
+	mux.HandleFunc("/api/proxy-health", s.handleProxyHealth)
 
 	// Serve embedded frontend.
 	frontendContent, _ := fs.Sub(frontendFS, "frontend")
@@ -232,6 +235,17 @@ func (s *Server) handleByUser(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	writeJSON(w, result)
+}
+
+func (s *Server) handleProxyHealth(w http.ResponseWriter, r *http.Request) {
+	client := &http.Client{Timeout: 1 * time.Second}
+	resp, err := client.Get(s.proxyURL + "/health")
+	if err != nil {
+		writeJSON(w, map[string]bool{"active": false})
+		return
+	}
+	resp.Body.Close()
+	writeJSON(w, map[string]bool{"active": resp.StatusCode == http.StatusOK})
 }
 
 func (s *Server) handleCalls(w http.ResponseWriter, r *http.Request) {

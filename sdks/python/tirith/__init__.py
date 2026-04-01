@@ -13,7 +13,7 @@ Usage:
 from tirith._patch import patch_all as _patch_all
 from tirith._config import configure, get_proxy_url
 
-__version__ = "0.1.0"
+__version__ = "2.0.0"
 
 # Auto-patch on import.
 _patch_all()

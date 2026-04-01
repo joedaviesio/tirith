@@ -139,11 +139,13 @@ export async function fetchDashboardData(
 
 export async function fetchProxyStatus(signal?: AbortSignal): Promise<boolean> {
   try {
-    const res = await fetch("http://localhost:5555/health", {
+    const res = await fetch(`${API_BASE}/api/proxy-health`, {
       cache: "no-store",
       signal,
     });
-    return res.ok;
+    if (!res.ok) return false;
+    const data = await res.json();
+    return data.active === true;
   } catch {
     return false;
   }

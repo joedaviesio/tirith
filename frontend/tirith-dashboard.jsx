@@ -356,7 +356,7 @@ export default function TirithDashboard() {
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <div style={{ width: 32, height: 32, borderRadius: 8, background: "linear-gradient(135deg, #22d3ee, #a78bfa)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, fontWeight: 700, color: "#0f0f1a" }}>C</div>
           <span style={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.02em" }}>Tirith</span>
-          <span style={{ fontSize: 11, color: "#64748b", background: "rgba(255,255,255,0.04)", padding: "2px 8px", borderRadius: 4, marginLeft: 4 }}>v0.1.0</span>
+          <span style={{ fontSize: 11, color: "#64748b", background: "rgba(255,255,255,0.04)", padding: "2px 8px", borderRadius: 4, marginLeft: 4 }}>v2.0.0</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>

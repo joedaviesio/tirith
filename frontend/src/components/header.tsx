@@ -12,7 +12,7 @@ export function Header({ proxyActive }: Props) {
           Tirith
         </span>
         <span className="text-xs text-[var(--color-text-tertiary)] border border-[var(--color-border-light)] px-2 py-0.5 rounded-md">
-          v0.1.0
+          v2.0
         </span>
       </div>
       <div className="flex items-center gap-3">
