@@ -11,7 +11,6 @@ interface Props {
 }
 
 const TIME_RANGES = [
-  { value: "1h", label: "Last hour" },
   { value: "24h", label: "Today" },
   { value: "7d", label: "7 days" },
   { value: "30d", label: "30 days" },

@@ -2,6 +2,7 @@ package proxy
 
 import (
 	"bytes"
+	"compress/gzip"
 	"encoding/json"
 	"io"
 	"net/http"
@@ -89,6 +90,7 @@ func (s *Server) handleAnthropic(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+
 	if isStreaming {
 		s.handleAnthropicStreaming(w, upstreamReq, start, tag, userTag, sessionTag, environment, upstreamPath)
 		return
@@ -112,10 +114,21 @@ func (s *Server) handleAnthropic(w http.ResponseWriter, r *http.Request) {
 
 	latencyMs := int(time.Since(start).Milliseconds())
 
+	// Decompress if gzip-encoded for parsing, but keep original for client.
+	parseBody := respBody
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		if gr, err := gzip.NewReader(bytes.NewReader(respBody)); err == nil {
+			if decompressed, err := io.ReadAll(gr); err == nil {
+				parseBody = decompressed
+			}
+			gr.Close()
+		}
+	}
+
 	// Parse usage from response.
 	var apiResp anthropicResponse
 	if resp.StatusCode == http.StatusOK {
-		if err := json.Unmarshal(respBody, &apiResp); err != nil {
+		if err := json.Unmarshal(parseBody, &apiResp); err != nil {
 			s.logger.Warn("failed to parse response for usage", "error", err)
 		}
 	}

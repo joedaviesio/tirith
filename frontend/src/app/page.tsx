@@ -14,8 +14,8 @@ export default function DashboardPage() {
   const [proxyActive, setProxyActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Filter state — default to last hour for real-time focus
-  const [timeRange, setTimeRange] = useState("1h");
+  // Filter state — default to today
+  const [timeRange, setTimeRange] = useState("24h");
   const [selectedModel, setSelectedModel] = useState("");
 
   useEffect(() => {

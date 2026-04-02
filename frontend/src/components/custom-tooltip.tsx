@@ -26,7 +26,7 @@ export function CustomTooltip({
       <div className="text-[var(--color-text-primary)] font-semibold mb-1.5">
         {label}
       </div>
-      {payload.map((p, i) => (
+      {payload.filter((p) => p.name !== "Trend").map((p, i) => (
         <div
           key={i}
           className="flex items-center gap-2 mt-0.5"

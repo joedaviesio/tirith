@@ -71,7 +71,12 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	return s.httpSrv.Shutdown(ctx)
+	err := s.httpSrv.Shutdown(ctx)
+	if ctx.Err() != nil {
+		// Shutdown timed out — force-close remaining connections.
+		s.httpSrv.Close()
+	}
+	return err
 }
 
 func writeJSON(w http.ResponseWriter, data interface{}) {

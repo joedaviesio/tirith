@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 	"net/http"
@@ -9,6 +10,7 @@ import (
 	"os/signal"
 	"runtime"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -84,7 +86,7 @@ func runStart(port int, openBrowser bool) error {
 	proxyURL := fmt.Sprintf("http://%s:%d", cfg.Proxy.Host, cfg.Proxy.Port)
 	dash := dashboard.NewServer(cfg.Dashboard.Host, cfg.Dashboard.Port, proxyURL, store, logger)
 	go func() {
-		if err := dash.Start(); err != nil && err.Error() != "http: Server closed" {
+		if err := dash.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			fmt.Fprintf(os.Stderr, "Dashboard failed to start: %s\n", err)
 		}
 	}()
@@ -92,22 +94,28 @@ func runStart(port int, openBrowser bool) error {
 	// Handle graceful shutdown.
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
+	shutdownDone := make(chan struct{})
 
 	go func() {
 		<-sigCh
 		// Restore default signal behavior so a second Ctrl+C force-kills.
 		signal.Stop(sigCh)
 		fmt.Fprintln(os.Stderr, "\nStopping Tirith... bye!")
-		dash.Shutdown()
-		srv.Shutdown()
+		var wg sync.WaitGroup
+		wg.Add(2)
+		go func() { defer wg.Done(); dash.Shutdown() }()
+		go func() { defer wg.Done(); srv.Shutdown() }()
+		wg.Wait()
+		close(shutdownDone)
 	}()
 
 	dashURL := fmt.Sprintf("http://localhost:%d", cfg.Dashboard.Port)
 
 	fmt.Fprintln(os.Stderr)
-	fmt.Fprintln(os.Stderr, "  Tirith is running.")
-	fmt.Fprintf(os.Stderr, "  Dashboard: %s\n", dashURL)
-	fmt.Fprintln(os.Stderr, "  Press Ctrl+C to stop.")
+	fmt.Fprintf(os.Stderr, "  Kia ora from Tirith — %s\n", dashURL)
+	fmt.Fprintln(os.Stderr, "  Start:     tirith start")
+	fmt.Fprintln(os.Stderr, "  Stop:      Ctrl+C")
+	fmt.Fprintln(os.Stderr, "  Reinstall: import tirith")
 	fmt.Fprintln(os.Stderr)
 
 	if openBrowser {
@@ -128,7 +136,8 @@ func runStart(port int, openBrowser bool) error {
 	}
 
 	if err := srv.Start(); err != nil {
-		if err.Error() == "http: Server closed" {
+		if errors.Is(err, http.ErrServerClosed) {
+			<-shutdownDone
 			return nil
 		}
 		return err
@@ -296,7 +305,7 @@ func runCmd() *cobra.Command {
 
 			// Start proxy in background.
 			go func() {
-				if err := srv.Start(); err != nil && err.Error() != "http: Server closed" {
+				if err := srv.Start(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 					fmt.Fprintf(os.Stderr, "Proxy failed to start: %s\n", err)
 				}
 			}()

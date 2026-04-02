@@ -4,8 +4,9 @@ import { useMemo } from "react";
 import {
   AreaChart,
   Area,
-  BarChart,
+  ComposedChart,
   Bar,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -68,13 +69,14 @@ export function UsageChart({ daily, calls, timeRange }: Props) {
   const dataKey = timeRange === "1h" ? "label" : "date";
 
   const formatValue = (v: number) => {
-    if (v >= 1) return `$${v.toFixed(2)}`;
-    if (v > 0) return `$${v.toFixed(3)}`;
+    if (v >= 0.01) return `$${v.toFixed(2)}`;
+    if (v > 0) return `$${v.toFixed(4)}`;
     return "$0";
   };
 
   const tooltipFormatter = (value: number, name: string) => {
     if (name === "calls" || name === "Calls") return `${value}`;
+    if (value >= 0.01) return `$${value.toFixed(2)}`;
     return `$${value.toFixed(4)}`;
   };
 
@@ -111,7 +113,7 @@ export function UsageChart({ daily, calls, timeRange }: Props) {
 
       <ResponsiveContainer width="100%" height={280}>
         {timeRange === "1h" ? (
-          <BarChart data={hourlyBuckets}>
+          <ComposedChart data={hourlyBuckets}>
             <CartesianGrid
               strokeDasharray="3 3"
               stroke="var(--chart-gridline)"
@@ -140,7 +142,16 @@ export function UsageChart({ daily, calls, timeRange }: Props) {
               radius={[4, 4, 0, 0]}
               opacity={0.85}
             />
-          </BarChart>
+            <Line
+              dataKey="cost"
+              name="Trend"
+              stroke="var(--color-text-secondary)"
+              strokeWidth={1.5}
+              dot={{ r: 3.5, fill: "var(--color-text-secondary)", stroke: "var(--color-surface)", strokeWidth: 2 }}
+              activeDot={false}
+              legendType="none"
+            />
+          </ComposedChart>
         ) : (
           <AreaChart data={daily}>
             <defs>

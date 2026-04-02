@@ -2,8 +2,10 @@ package proxy
 
 import (
 	"bufio"
+	"compress/gzip"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -57,11 +59,23 @@ func (s *Server) handleAnthropicStreaming(
 		return
 	}
 
+	// Decompress if gzip-encoded.
+	var body io.Reader = resp.Body
+	if resp.Header.Get("Content-Encoding") == "gzip" {
+		gr, err := gzip.NewReader(resp.Body)
+		if err != nil {
+			s.logger.Error("failed to create gzip reader for streaming response", "error", err)
+			return
+		}
+		defer gr.Close()
+		body = gr
+	}
+
 	// Track usage across SSE events.
 	var model string
 	var inputTokens, outputTokens, cacheReadTokens, cacheWriteTokens int
 
-	scanner := bufio.NewScanner(resp.Body)
+	scanner := bufio.NewScanner(body)
 	// Increase buffer for large SSE events.
 	scanner.Buffer(make([]byte, 0, 1024*1024), 1024*1024)
 

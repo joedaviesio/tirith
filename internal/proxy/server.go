@@ -52,6 +52,7 @@ func NewServer(cfg *config.Config, store *storage.Store, pricer *pricing.Engine,
 		fmt.Fprint(w, "ok")
 	})
 
+
 	s.httpSrv = &http.Server{
 		Addr:              fmt.Sprintf("%s:%d", cfg.Proxy.Host, cfg.Proxy.Port),
 		Handler:           mux,
@@ -73,7 +74,13 @@ func (s *Server) Start() error {
 func (s *Server) Shutdown() error {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
-	return s.httpSrv.Shutdown(ctx)
+	err := s.httpSrv.Shutdown(ctx)
+	if ctx.Err() != nil {
+		// Shutdown timed out — force-close remaining connections.
+		s.httpSrv.Close()
+	}
+	s.httpClient.CloseIdleConnections()
+	return err
 }
 
 func (s *Server) Addr() string {
