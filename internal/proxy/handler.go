@@ -70,10 +70,13 @@ func (s *Server) handleAnthropic(w http.ResponseWriter, r *http.Request) {
 		isStreaming = true
 	}
 
-	// Build upstream URL.
+	// Build upstream URL, preserving query string.
 	upstreamPath := r.URL.Path
 	upstreamPath = strings.TrimPrefix(upstreamPath, "/proxy/anthropic")
 	upstreamURL := s.cfg.Providers.Anthropic.Upstream + upstreamPath
+	if r.URL.RawQuery != "" {
+		upstreamURL += "?" + r.URL.RawQuery
+	}
 
 	// Create upstream request.
 	upstreamReq, err := http.NewRequestWithContext(r.Context(), r.Method, upstreamURL, bytes.NewReader(bodyBytes))
@@ -183,12 +186,8 @@ func (s *Server) handleAnthropic(w http.ResponseWriter, r *http.Request) {
 		)
 	}
 
-	// Return response to client unmodified.
-	for key, values := range resp.Header {
-		for _, v := range values {
-			w.Header().Add(key, v)
-		}
-	}
+	// Return response to client with safe headers only.
+	copySafeHeaders(resp.Header, w.Header())
 	w.WriteHeader(resp.StatusCode)
 	w.Write(respBody)
 }

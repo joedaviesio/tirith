@@ -65,8 +65,8 @@ A transparent proxy that sits between your app and AI providers (Anthropic, Open
 | `tirith report --last 7d` | Report for last 7 days |
 | `tirith report --tag grant-scanner` | Report filtered by tag |
 | `tirith config` | View/edit configuration |
-| `tirith cloud login` | Authenticate with cloud service |
-| `tirith cloud sync` | Sync local data to cloud |
+| `tirith cloud login` | Authenticate with cloud service (not yet implemented) |
+| `tirith cloud sync` | Sync local data to cloud (not yet implemented) |
 
 **Distribution:**
 
@@ -146,15 +146,17 @@ cloud:
 
 **Proxy Routing:**
 
+Currently implemented (Anthropic only):
 ```
 localhost:5555/proxy/anthropic/v1/messages  →  api.anthropic.com/v1/messages
-localhost:5555/proxy/openai/v1/chat/completions  →  api.openai.com/v1/chat/completions
+localhost:5555/v1/messages                  →  api.anthropic.com/v1/messages  (auto-detect)
+localhost:5555/health                       →  health check
 ```
 
-Or simpler — auto-detect provider from request shape:
+Planned (not yet implemented):
 ```
-localhost:5555/v1/messages  →  Anthropic (messages API shape)
-localhost:5555/v1/chat/completions  →  OpenAI (chat completions shape)
+localhost:5555/proxy/openai/v1/chat/completions  →  api.openai.com/v1/chat/completions
+localhost:5555/v1/chat/completions               →  OpenAI (auto-detect)
 ```
 
 **Streaming Support:**
@@ -348,7 +350,7 @@ CREATE INDEX idx_provider ON api_calls(provider);
 
 **Edge proxy** handles the latency concern — deployed globally so the extra hop is <20ms. It does minimal work: tag extraction, forward to provider, stream response back, and async-post the log record to the API service.
 
-**Cloud API endpoints:**
+**Cloud API endpoints (planned, not yet implemented):**
 
 ```
 POST   /api/v1/log              — ingest a log record (from edge proxy)
@@ -358,6 +360,20 @@ GET    /api/v1/reports/by-user   — breakdown by user
 GET    /api/v1/reports/by-model  — breakdown by model
 POST   /api/v1/alerts            — create/update alert rules
 GET    /api/v1/export            — CSV/JSON export
+```
+
+**Local dashboard API endpoints (implemented):**
+
+```
+GET    /api/overview             — total spend, call count, date range
+GET    /api/by-model             — cost breakdown by model
+GET    /api/by-tag               — cost breakdown by tag
+GET    /api/by-user              — cost breakdown by user
+GET    /api/daily-spend          — daily spend time series
+GET    /api/daily-by-model       — daily spend broken out by model
+GET    /api/calls                — paginated list of recent calls
+GET    /api/models               — list of models seen
+GET    /api/proxy-health         — proxy liveness check
 ```
 
 **Authentication:**
@@ -470,9 +486,9 @@ try {
 }
 ```
 
-#### Explicit Mode (Opt-In Per Client)
+#### Explicit Mode (Opt-In Per Client) — Not Yet Implemented
 
-For users who want surgical control instead of global patching:
+Planned for a future version. Would allow surgical control instead of global patching:
 
 ```python
 from tirith import wrap
@@ -564,13 +580,13 @@ response = client.messages.create(
     },
 )
 
-# Or via the tirith helper (cleaner API)
-with tirith.tag("grant-scanner", user=user_id):
-    response = client.messages.create(
-        model="claude-sonnet-4-6",
-        max_tokens=1024,
-        messages=[{"role": "user", "content": "Hello"}],
-    )
+# tirith.tag() context manager — not yet implemented
+# with tirith.tag("grant-scanner", user=user_id):
+#     response = client.messages.create(
+#         model="claude-sonnet-4-6",
+#         max_tokens=1024,
+#         messages=[{"role": "user", "content": "Hello"}],
+#     )
 ```
 
 ---
@@ -630,22 +646,22 @@ with tirith.tag("grant-scanner", user=user_id):
 ## MVP Scope (v0.1)
 
 ### In Scope
-- [ ] Go CLI with `start`, `stop`, `report`, `dashboard`, `run` commands
-- [ ] HTTP proxy supporting Anthropic Messages API
-- [ ] Streaming (SSE) passthrough
-- [ ] Token + cost logging to SQLite
-- [ ] `X-Tirith-Tag` header support
-- [ ] Pricing engine with Anthropic models
-- [ ] Terminal report output (table format)
-- [ ] Basic local dashboard (spend over time, by model, by tag)
-- [ ] Python SDK wrapper (`pip install tirith`) — auto-patches Anthropic client
-- [ ] TypeScript SDK wrapper (`npm install tirith`) — auto-patches @anthropic-ai/sdk
-- [ ] `tirith run -- <cmd>` CLI wrapper (env var injection)
-- [ ] `brew install` and `npm install -g` (for CLI binary) distribution
+- [x] Go CLI with `start`, `stop`, `report`, `dashboard`, `run` commands
+- [x] HTTP proxy supporting Anthropic Messages API
+- [x] Streaming (SSE) passthrough
+- [x] Token + cost logging to SQLite
+- [x] `X-Tirith-Tag` header support
+- [x] Pricing engine with Anthropic models
+- [x] Terminal report output (table format)
+- [x] Local dashboard (Next.js + Recharts, embedded via `go:embed`)
+- [x] Python SDK wrapper (`pip install tirith`) — auto-patches Anthropic + OpenAI clients
+- [x] TypeScript SDK wrapper (`npm install tirith`) — auto-patches @anthropic-ai/sdk
+- [x] `tirith run -- <cmd>` CLI wrapper (env var injection)
+- [ ] `brew install` and `npm install -g` (for CLI binary) distribution — in progress
 
 ### Out of Scope for MVP
-- [ ] OpenAI / Google provider support in SDK wrappers (v0.2)
-- [ ] `tirith.tag()` context manager / `tirith.configure()` (v0.2)
+- [ ] OpenAI / Google proxy routes (SDK patching done, proxy routing not yet) (v0.2)
+- [ ] `tirith.tag()` context manager / `wrap()` explicit mode (v0.2)
 - [ ] Cloud hosted proxy (v0.3)
 - [ ] Team features, auth, billing (v0.4)
 - [ ] Alerts and anomaly detection (v0.5)
@@ -747,21 +763,21 @@ tirith/
 
 ### Key Go Libraries
 - `github.com/spf13/cobra` — CLI framework
-- `github.com/mattn/go-sqlite3` — SQLite driver
+- `modernc.org/sqlite` — Pure Go SQLite driver (no CGO)
 - `net/http/httputil` — ReverseProxy for proxying
 - `github.com/olekukonez/tablewriter` — Terminal table output
 - `embed` — Bundle dashboard frontend into binary
 
-### First Implementation Steps
-1. Set up Cobra CLI with `start`, `report`, and `run` commands
-2. Build the reverse proxy for Anthropic Messages API (non-streaming first)
-3. Parse response `usage` field for token counts
-4. Log to SQLite
-5. Add `report` command with terminal table output
-6. Add streaming support
-7. Build Python SDK wrapper (`import tirith` auto-patches Anthropic)
-8. Build TypeScript SDK wrapper (`import "tirith"` auto-patches @anthropic-ai/sdk)
-9. Build `tirith run -- <cmd>` CLI wrapper
-10. Build and embed the dashboard
-11. Add tag support via custom headers
-12. Package for distribution (Go binary via brew/npm, Python via PyPI, TS via npm)
+### Implementation Status
+1. ~~Set up Cobra CLI with `start`, `report`, and `run` commands~~ — done
+2. ~~Build the reverse proxy for Anthropic Messages API (non-streaming first)~~ — done
+3. ~~Parse response `usage` field for token counts~~ — done
+4. ~~Log to SQLite~~ — done
+5. ~~Add `report` command with terminal table output~~ — done
+6. ~~Add streaming support~~ — done
+7. ~~Build Python SDK wrapper (`import tirith` auto-patches Anthropic + OpenAI)~~ — done
+8. ~~Build TypeScript SDK wrapper (`import "tirith"` auto-patches @anthropic-ai/sdk)~~ — done
+9. ~~Build `tirith run -- <cmd>` CLI wrapper~~ — done
+10. ~~Build and embed the dashboard (Next.js + Recharts)~~ — done
+11. ~~Add tag support via custom headers~~ — done
+12. Package for distribution (Go binary via brew, Python via PyPI, TS via npm) — in progress

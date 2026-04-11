@@ -29,14 +29,14 @@ Your app doesn't know the proxy exists. It gets the same response it would from 
 
 Supports both regular (wait for full response) and streaming (SSE) calls.
 
-### SDK Wrappers (code written, not yet tested)
+### SDK Wrappers
 
 Small packages that make setup even easier — instead of changing env vars, you just add one import line.
 
-- **Python** (`sdks/python/`) — `import tirith` at the top of your app, and all Anthropic/OpenAI client instances automatically route through the proxy.
+- **Python** (`sdks/python/`) — `import tirith` at the top of your app, and all Anthropic/OpenAI client instances automatically route through the proxy. Patches both sync and async clients.
 - **TypeScript** (`sdks/typescript/`) — `import "tirith"` does the same for Node.js apps.
 
-These are not published to PyPI/npm yet. For now they'd be installed locally with `pip install -e ./sdks/python`.
+Not published to PyPI/npm yet. For now they're installed locally with `pip install -e ./sdks/python`.
 
 ### Pricing Engine
 
@@ -52,25 +52,30 @@ SQLite database at `~/.tirith/data.db`. Stores every API call with: timestamp, p
 
 ---
 
+### Dashboard
+
+Local web UI served at `localhost:5556` via `./tirith dashboard`. Built with Next.js + Recharts, embedded into the Go binary via `go:embed`.
+
+**Features:**
+- Summary stat cards (total spend, call count, avg latency)
+- Daily spend line chart (with per-model breakdown)
+- Cost by model and by tag bar charts
+- Paginated recent calls table
+- Auto-refresh every 10 seconds
+- Proxy health check indicator
+
+**API endpoints served by the dashboard:**
+- `/api/overview`, `/api/by-model`, `/api/by-tag`, `/api/by-user`
+- `/api/daily-spend`, `/api/daily-by-model`
+- `/api/calls`, `/api/models`, `/api/proxy-health`
+
+---
+
 ## What's NOT Built Yet
 
-### Dashboard (the frontend)
+### OpenAI/Google proxy routes
 
-There is no web UI yet. The `internal/dashboard/` directory exists but is empty. This is the piece that would give you charts and visualisations at `localhost:5556`.
-
-**What it needs:**
-- A small React app (or even plain HTML + Chart.js for MVP)
-- An API layer in the Go binary that serves JSON data from SQLite
-- Embed the built frontend into the Go binary so it ships as one file
-- Charts: spend over time, by model, by tag, request volume
-
-### End-to-end testing
-
-We haven't sent a real API call through the proxy yet. Need to:
-1. Start the proxy
-2. Make a real Anthropic API call pointed at `localhost:5555`
-3. Confirm the response comes back correctly
-4. Run `./tirith report` and see the cost show up
+The proxy only routes Anthropic traffic. SDK wrappers patch OpenAI clients to point at the proxy, but `/proxy/openai/` is not handled by the Go proxy yet.
 
 ### PID-based stop
 
@@ -83,57 +88,23 @@ Right now the binary only exists in this directory. For it to work as `tirith` f
 - Installed via `go install`
 - Published via Homebrew or npm
 
-### SDK wrapper testing
+### SDK features not yet implemented
 
-The Python and TypeScript wrappers need real-world testing — import them in a project, make API calls, confirm routing works and fallback behaviour is correct.
+- `tirith.tag()` context manager for per-call tagging
+- `wrap()` explicit mode (opt-in per client instead of global patching)
+- `tirith.configure()` exists in code but is not properly exported in either SDK
 
 ---
 
-## Steps to Finish the Local Prototype
+## Remaining Work
 
-Here's the path from where we are now to "I can use this and see a working dashboard":
-
-### Step 1: End-to-end test (10 min)
-
-Start the proxy, send a real API call through it (via curl or a Python script), confirm cost shows up in the report.
-
-### Step 2: Dashboard API endpoints (30 min)
-
-Add JSON API routes to the Go binary:
-- `GET /api/overview` — total spend, call count, date range
-- `GET /api/by-model` — cost breakdown by model
-- `GET /api/by-tag` — cost breakdown by tag
-- `GET /api/calls` — paginated list of recent calls
-
-These read from the same SQLite database the proxy writes to.
-
-### Step 3: Dashboard frontend (1-2 hours)
-
-Build a simple single-page app. Minimal viable version:
-- Summary cards (total spend, total calls, avg latency)
-- Line chart: spend over time
-- Bar chart: cost by model
-- Bar chart: cost by tag
-- Table: recent API calls
-
-Options:
-- **Simple**: Plain HTML + vanilla JS + Chart.js (no build step, embed directly)
-- **Polished**: React + Recharts (needs a build step, then embed the dist)
-
-### Step 4: Embed and serve dashboard (30 min)
-
-Use Go's `embed` package to bundle the frontend files into the binary. Serve them from `localhost:5556` when you run `./tirith dashboard` or automatically alongside the proxy.
-
-### Step 5: Python SDK wrapper test (15 min)
-
-Install the wrapper locally (`pip install -e ./sdks/python`), write a small test script that imports `tirith` then uses the Anthropic SDK normally, confirm calls route through the proxy.
-
-### Step 6: Polish (30 min)
-
-- PID file for `tirith stop`
-- Nicer startup banner
-- Error messages when proxy port is already in use
-- `tirith report --last 24h` formatting
+- [ ] OpenAI proxy route in Go (`/proxy/openai/`)
+- [ ] PID file for `tirith stop`
+- [ ] Export `configure()` from Python and TypeScript SDKs
+- [ ] `tirith.tag()` context manager
+- [ ] `wrap()` explicit mode for per-client patching
+- [ ] Publish to Homebrew, PyPI, npm
+- [ ] End-to-end integration tests
 
 ---
 
@@ -179,6 +150,7 @@ If the API call works, the report should show the cost of that one call.
 | `internal/pricing/pricing.yaml` | Model pricing data |
 | `internal/config/config.go` | Config loading from ~/.tirith/config.yaml |
 | `internal/report/terminal.go` | Terminal table formatting |
-| `internal/dashboard/` | Empty — dashboard goes here |
+| `internal/dashboard/server.go` | Dashboard HTTP server + API endpoints |
+| `internal/dashboard/frontend/` | Embedded Next.js + Recharts build |
 | `sdks/python/` | Python SDK wrapper |
 | `sdks/typescript/` | TypeScript SDK wrapper |

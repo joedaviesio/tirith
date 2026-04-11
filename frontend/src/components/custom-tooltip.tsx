@@ -23,7 +23,7 @@ export function CustomTooltip({
 
   return (
     <div className="bg-white border border-[var(--color-border-light)] rounded-lg px-4 py-3 text-[13px] shadow-[var(--shadow-tooltip)]">
-      <div className="text-[var(--color-text-primary)] font-semibold mb-1.5">
+      <div className="text-[var(--color-text-primary)] font-bold mb-1.5">
         {label}
       </div>
       {payload.filter((p) => p.name !== "Trend").map((p, i) => (

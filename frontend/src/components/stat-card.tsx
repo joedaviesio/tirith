@@ -10,7 +10,7 @@ export function StatCard({ label, value, sub }: StatCardProps) {
       <div className="text-[13px] text-[var(--color-text-secondary)] mb-1">
         {label}
       </div>
-      <div className="text-[28px] font-semibold text-[var(--color-text-primary)] font-tabular tracking-tight">
+      <div className="text-[28px] font-bold text-[var(--color-text-primary)] font-tabular tracking-tight">
         {value}
       </div>
       {sub && (

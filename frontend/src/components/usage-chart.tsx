@@ -98,7 +98,7 @@ export function UsageChart({ daily, calls, timeRange }: Props) {
   return (
     <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
       <div className="flex items-center justify-between mb-1">
-        <div className="text-[15px] font-semibold text-[var(--color-text-primary)]">
+        <div className="text-[15px] font-bold text-[var(--color-text-primary)]">
           Spend over time
         </div>
         <div className="text-[13px] text-[var(--color-text-tertiary)]">
@@ -146,7 +146,7 @@ export function UsageChart({ daily, calls, timeRange }: Props) {
               dataKey="cost"
               name="Trend"
               stroke="var(--color-text-secondary)"
-              strokeWidth={1.5}
+              strokeWidth={1}
               dot={{ r: 3.5, fill: "var(--color-text-secondary)", stroke: "var(--color-surface)", strokeWidth: 2 }}
               activeDot={false}
               legendType="none"
@@ -185,7 +185,7 @@ export function UsageChart({ daily, calls, timeRange }: Props) {
               type="monotone"
               dataKey="cost"
               stroke="var(--chart-line)"
-              strokeWidth={2}
+              strokeWidth={1.5}
               fill="url(#areaFill)"
               name="Spend"
             />

@@ -45,12 +45,8 @@ func (s *Server) handleAnthropicStreaming(
 	}
 	defer resp.Body.Close()
 
-	// Copy response headers.
-	for key, values := range resp.Header {
-		for _, v := range values {
-			w.Header().Add(key, v)
-		}
-	}
+	// Copy safe response headers only.
+	copySafeHeaders(resp.Header, w.Header())
 	w.WriteHeader(resp.StatusCode)
 
 	flusher, ok := w.(http.Flusher)

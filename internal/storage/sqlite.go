@@ -97,6 +97,7 @@ type ReportFilter struct {
 	Environment string
 	Provider    string
 	Model       string
+	TZOffset    string // SQLite offset for DATE(), e.g. "+12:00", "-05:00"
 }
 
 type Summary struct {
@@ -239,14 +240,15 @@ type DailyModelSpend struct {
 
 func (s *Store) GetByUser(f ReportFilter) ([]UserSummary, error) {
 	where, args := buildWhere(f)
+	de := dateExpr(f)
 	query := fmt.Sprintf(`
 		SELECT COALESCE(user_tag, '(anonymous)'),
 		       SUM(cost_cents), COUNT(*),
-		       MIN(DATE(timestamp)), MAX(DATE(timestamp))
+		       MIN(%s), MAX(%s)
 		FROM api_calls %s
 		GROUP BY user_tag
 		ORDER BY SUM(cost_cents) DESC
-		LIMIT 100`, where)
+		LIMIT 100`, de, de, where)
 
 	rows, err := s.db.Query(query, args...)
 	if err != nil {
@@ -268,14 +270,15 @@ func (s *Store) GetByUser(f ReportFilter) ([]UserSummary, error) {
 
 func (s *Store) GetDailySpend(f ReportFilter) ([]DailySpend, error) {
 	where, args := buildWhere(f)
+	de := dateExpr(f)
 	query := fmt.Sprintf(`
-		SELECT DATE(timestamp) as day,
+		SELECT %s as day,
 		       SUM(cost_cents), COUNT(*),
 		       SUM(input_tokens), SUM(output_tokens)
 		FROM api_calls %s
 		GROUP BY day
 		ORDER BY day ASC
-		LIMIT 90`, where)
+		LIMIT 90`, de, where)
 
 	rows, err := s.db.Query(query, args...)
 	if err != nil {
@@ -297,14 +300,15 @@ func (s *Store) GetDailySpend(f ReportFilter) ([]DailySpend, error) {
 
 func (s *Store) GetDailyByModel(f ReportFilter) ([]DailyModelSpend, error) {
 	where, args := buildWhere(f)
+	de := dateExpr(f)
 	query := fmt.Sprintf(`
-		SELECT DATE(timestamp) as day, model,
+		SELECT %s as day, model,
 		       SUM(cost_cents), COUNT(*),
 		       SUM(input_tokens), SUM(output_tokens)
 		FROM api_calls %s
 		GROUP BY day, model
 		ORDER BY day ASC, SUM(cost_cents) DESC
-		LIMIT 900`, where)
+		LIMIT 900`, de, where)
 
 	rows, err := s.db.Query(query, args...)
 	if err != nil {
@@ -355,13 +359,21 @@ func (s *Store) GetRecentCalls(limit int) ([]APICall, error) {
 	return results, rows.Err()
 }
 
+// dateExpr returns a SQLite DATE expression adjusted by the filter's timezone offset.
+func dateExpr(f ReportFilter) string {
+	if f.TZOffset != "" {
+		return fmt.Sprintf("DATE(timestamp, '%s')", f.TZOffset)
+	}
+	return "DATE(timestamp)"
+}
+
 func buildWhere(f ReportFilter) (string, []interface{}) {
 	var clauses []string
 	var args []interface{}
 
 	if !f.Since.IsZero() {
 		clauses = append(clauses, "timestamp >= ?")
-		args = append(args, f.Since)
+		args = append(args, f.Since.UTC().Format(time.RFC3339))
 	}
 	if f.Tag != "" {
 		clauses = append(clauses, "tag = ?")

@@ -23,9 +23,7 @@ CREATE TABLE IF NOT EXISTS api_calls (
     session_tag        TEXT,
     environment        TEXT DEFAULT 'default',
 
-    endpoint           TEXT,
-
-    created_at         DATETIME DEFAULT CURRENT_TIMESTAMP
+    endpoint           TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_timestamp ON api_calls(timestamp);

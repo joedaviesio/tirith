@@ -67,16 +67,24 @@ interface RawCall {
 }
 
 function formatDate(dateStr: string): string {
-  const d = new Date(dateStr + "T00:00:00");
-  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  // Dates arrive pre-adjusted to the user's timezone by the server,
+  // so parse as UTC and display as UTC to prevent the browser shifting the date.
+  const d = new Date(dateStr + "T00:00:00Z");
+  return d.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    timeZone: "UTC",
+  });
 }
+
+const userTZ = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 export async function fetchDashboardData(
   timeRange: string = "30d",
   model?: string,
   signal?: AbortSignal
 ): Promise<DashboardData> {
-  const params = new URLSearchParams({ last: timeRange });
+  const params = new URLSearchParams({ last: timeRange, tz: userTZ });
   if (model) params.set("model", model);
   const qs = params.toString();
 
@@ -86,8 +94,8 @@ export async function fetchDashboardData(
       fetchJSON<RawDaily[]>(`/api/daily-spend?${qs}`, signal),
       fetchJSON<RawDailyModel[]>(`/api/daily-by-model?${qs}`, signal),
       fetchJSON<RawModel[]>(`/api/by-model?${qs}`, signal),
-      fetchJSON<string[]>("/api/models?last=90d", signal),
-      fetchJSON<RawCall[]>("/api/calls", signal),
+      fetchJSON<string[]>(`/api/models?last=90d&tz=${encodeURIComponent(userTZ)}`, signal),
+      fetchJSON<RawCall[]>(`/api/calls?tz=${encodeURIComponent(userTZ)}`, signal),
     ]);
 
   const overview: OverviewSummary = {

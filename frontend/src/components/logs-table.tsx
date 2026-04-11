@@ -18,7 +18,7 @@ export function LogsTable({ calls }: Props) {
   if (calls.length === 0) {
     return (
       <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
-        <div className="text-[15px] font-semibold text-[var(--color-text-primary)] mb-4">
+        <div className="text-[15px] font-bold text-[var(--color-text-primary)] mb-4">
           Recent calls
         </div>
         <div className="flex items-center justify-center py-12 text-[var(--color-text-tertiary)] text-sm">
@@ -65,7 +65,7 @@ export function LogsTable({ calls }: Props) {
     <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]">
       {/* Header */}
       <div className="px-6 py-4 border-b border-[var(--color-border)]">
-        <div className="text-[15px] font-semibold text-[var(--color-text-primary)]">
+        <div className="text-[15px] font-bold text-[var(--color-text-primary)]">
           Recent calls
         </div>
       </div>

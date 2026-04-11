@@ -84,22 +84,53 @@ func writeJSON(w http.ResponseWriter, data interface{}) {
 	json.NewEncoder(w).Encode(data)
 }
 
+// parseTZ returns the *time.Location for the tz query param, defaulting to UTC.
+func parseTZ(r *http.Request) *time.Location {
+	tz := r.URL.Query().Get("tz")
+	if tz == "" {
+		return time.UTC
+	}
+	loc, err := time.LoadLocation(tz)
+	if err != nil {
+		return time.UTC
+	}
+	return loc
+}
+
+// sqliteOffset returns a SQLite-compatible offset string like "+12:00" or "-05:00".
+func sqliteOffset(loc *time.Location) string {
+	_, offset := time.Now().In(loc).Zone()
+	h := offset / 3600
+	m := (offset % 3600) / 60
+	if m < 0 {
+		m = -m
+	}
+	return fmt.Sprintf("%+03d:%02d", h, m)
+}
+
 func (s *Server) getFilter(r *http.Request) storage.ReportFilter {
 	f := storage.ReportFilter{}
 	if last := r.URL.Query().Get("last"); last != "" {
+		now := time.Now().UTC()
 		switch last {
 		case "1h":
-			f.Since = time.Now().Add(-1 * time.Hour)
+			f.Since = now.Add(-1 * time.Hour)
 		case "24h":
-			f.Since = time.Now().Add(-24 * time.Hour)
+			f.Since = now.Add(-24 * time.Hour)
 		case "7d":
-			f.Since = time.Now().Add(-7 * 24 * time.Hour)
+			f.Since = now.Add(-7 * 24 * time.Hour)
 		case "30d":
-			f.Since = time.Now().Add(-30 * 24 * time.Hour)
+			f.Since = now.Add(-30 * 24 * time.Hour)
 		}
 	}
 	f.Tag = r.URL.Query().Get("tag")
 	f.Model = r.URL.Query().Get("model")
+
+	loc := parseTZ(r)
+	if loc != time.UTC {
+		f.TZOffset = sqliteOffset(loc)
+	}
+
 	return f
 }
 
@@ -107,7 +138,8 @@ func (s *Server) handleOverview(w http.ResponseWriter, r *http.Request) {
 	f := s.getFilter(r)
 	summary, err := s.store.GetSummary(f)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.Error("dashboard query failed", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 	writeJSON(w, map[string]interface{}{
@@ -123,7 +155,8 @@ func (s *Server) handleByModel(w http.ResponseWriter, r *http.Request) {
 	f := s.getFilter(r)
 	models, err := s.store.GetByModel(f)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.Error("dashboard query failed", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -146,7 +179,8 @@ func (s *Server) handleByTag(w http.ResponseWriter, r *http.Request) {
 	f := s.getFilter(r)
 	tags, err := s.store.GetByTag(f)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.Error("dashboard query failed", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -167,7 +201,8 @@ func (s *Server) handleDailySpend(w http.ResponseWriter, r *http.Request) {
 	f := s.getFilter(r)
 	daily, err := s.store.GetDailySpend(f)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.Error("dashboard query failed", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -188,7 +223,8 @@ func (s *Server) handleDailyByModel(w http.ResponseWriter, r *http.Request) {
 	f := s.getFilter(r)
 	daily, err := s.store.GetDailyByModel(f)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.Error("dashboard query failed", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -210,7 +246,8 @@ func (s *Server) handleModels(w http.ResponseWriter, r *http.Request) {
 	f := s.getFilter(r)
 	models, err := s.store.GetByModel(f)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.Error("dashboard query failed", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -225,7 +262,8 @@ func (s *Server) handleByUser(w http.ResponseWriter, r *http.Request) {
 	f := s.getFilter(r)
 	users, err := s.store.GetByUser(f)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.Error("dashboard query failed", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -254,9 +292,11 @@ func (s *Server) handleProxyHealth(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleCalls(w http.ResponseWriter, r *http.Request) {
+	loc := parseTZ(r)
 	calls, err := s.store.GetRecentCalls(50)
 	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		s.logger.Error("dashboard query failed", "error", err)
+		http.Error(w, "internal server error", http.StatusInternalServerError)
 		return
 	}
 
@@ -264,7 +304,7 @@ func (s *Server) handleCalls(w http.ResponseWriter, r *http.Request) {
 	for i, c := range calls {
 		result[i] = map[string]interface{}{
 			"id":           c.ID,
-			"timestamp":    c.Timestamp.Format(time.RFC3339),
+			"timestamp":    c.Timestamp.In(loc).Format(time.RFC3339),
 			"provider":     c.Provider,
 			"model":        c.Model,
 			"input_tokens": c.InputTokens,

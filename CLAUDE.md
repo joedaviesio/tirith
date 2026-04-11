@@ -82,12 +82,15 @@ cd sdks/typescript && npm test
 
 ## Proxy Routing
 
+Currently only Anthropic is implemented in the proxy:
+
 ```
 localhost:5555/proxy/anthropic/v1/messages  →  api.anthropic.com/v1/messages
-localhost:5555/proxy/openai/v1/chat/completions  →  api.openai.com/v1/chat/completions
+localhost:5555/v1/messages                  →  api.anthropic.com/v1/messages  (auto-detect)
+localhost:5555/health                       →  health check
 ```
 
-Auto-detect fallback: `/v1/messages` → Anthropic, `/v1/chat/completions` → OpenAI.
+OpenAI/Google proxy routes are not yet implemented (SDK wrappers patch OpenAI clients but the proxy only forwards to Anthropic).
 
 ## Custom Headers
 
@@ -100,24 +103,42 @@ X-Tirith-Environment  # production, staging, dev
 
 ## MVP Scope (v0.1)
 
-Focus: Anthropic Messages API only. Go CLI with `start`, `stop`, `report`, `dashboard`, `run`. HTTP proxy with SSE streaming passthrough. Token + cost logging to SQLite. Tag support. Terminal report. Basic local dashboard. Python + TypeScript SDK wrappers.
+Focus: Anthropic Messages API only. Go CLI with `start`, `stop`, `report`, `dashboard`, `run`. HTTP proxy with SSE streaming passthrough. Token + cost logging to SQLite. Tag support. Terminal report. Local dashboard. Python + TypeScript SDK wrappers.
 
-Out of scope for MVP: OpenAI/Google in SDK wrappers, `tirith.tag()` context manager, cloud proxy, auth/billing, alerts.
+Out of scope for MVP: OpenAI/Google proxy routes, `tirith.tag()` context manager, `wrap()` explicit mode, cloud proxy, auth/billing, alerts.
 
-## Implementation Order
+Note: Python SDK already patches OpenAI clients (sync + async), but the Go proxy only routes Anthropic traffic.
 
-1. Cobra CLI with `start`, `report`, and `run` commands
-2. Reverse proxy for Anthropic Messages API (non-streaming)
-3. Parse response `usage` field for token counts
-4. Log to SQLite
-5. `report` command with terminal table
-6. Streaming (SSE) support
-7. Python SDK wrapper (`import tirith` auto-patches Anthropic)
-8. TypeScript SDK wrapper (`import "tirith"` auto-patches @anthropic-ai/sdk)
-9. `tirith run -- <cmd>` CLI wrapper
-10. Build and embed dashboard
-11. Tag support via custom headers
-12. Package for distribution (Go binary via brew, Python via PyPI, TS via npm)
+## Implementation Status
+
+1. ~~Cobra CLI with `start`, `report`, and `run` commands~~ — done
+2. ~~Reverse proxy for Anthropic Messages API (non-streaming)~~ — done
+3. ~~Parse response `usage` field for token counts~~ — done
+4. ~~Log to SQLite~~ — done
+5. ~~`report` command with terminal table~~ — done
+6. ~~Streaming (SSE) support~~ — done
+7. ~~Python SDK wrapper (`import tirith` auto-patches Anthropic + OpenAI)~~ — done
+8. ~~TypeScript SDK wrapper (`import "tirith"` auto-patches @anthropic-ai/sdk)~~ — done
+9. ~~`tirith run -- <cmd>` CLI wrapper~~ — done
+10. ~~Build and embed dashboard~~ — done (Next.js + Recharts, embedded via `go:embed`)
+11. ~~Tag support via custom headers~~ — done
+12. Package for distribution (Go binary via brew, Python via PyPI, TS via npm) — in progress
+
+## Dashboard API Endpoints
+
+The embedded dashboard server (port 5556) exposes:
+
+```
+GET /api/overview        — total spend, call count, date range
+GET /api/by-model        — cost breakdown by model
+GET /api/by-tag          — cost breakdown by tag
+GET /api/by-user         — cost breakdown by user
+GET /api/daily-spend     — daily spend time series
+GET /api/daily-by-model  — daily spend broken out by model
+GET /api/calls           — paginated list of recent calls
+GET /api/models          — list of models seen
+GET /api/proxy-health    — proxy liveness check
+```
 
 ## Ports
 

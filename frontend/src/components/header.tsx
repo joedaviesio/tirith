@@ -8,7 +8,7 @@ export function Header({ proxyActive }: Props) {
   return (
     <header className="border-b border-[var(--color-border)] px-8 py-4 flex items-center justify-between">
       <div className="flex items-center gap-3">
-        <span className="text-[22px] font-semibold tracking-tight text-[var(--color-text-primary)]">
+        <span className="text-[22px] font-bold tracking-tight text-[var(--color-text-primary)]">
           Tirith
         </span>
         <span className="text-xs text-[var(--color-text-tertiary)] border border-[var(--color-border-light)] px-2 py-0.5 rounded-md">
