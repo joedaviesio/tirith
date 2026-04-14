@@ -22,6 +22,15 @@ sdks/typescript/dist/
 
 # Next.js
 frontend/.next/
+frontend/out/
+internal/dashboard/frontend/*
+!internal/dashboard/frontend/.gitkeep
+
+# Internal docs (not for public repo)
+CLAUDE.md
+STATUS.md
+TIRITH_ARCHITECTURE.md
+LAUNCH_CHECKLIST.md
 
 # Tirith data
 *.db
