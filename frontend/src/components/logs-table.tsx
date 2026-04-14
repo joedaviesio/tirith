@@ -17,8 +17,8 @@ export function LogsTable({ calls }: Props) {
 
   if (calls.length === 0) {
     return (
-      <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
-        <div className="text-[15px] font-bold text-[var(--color-text-primary)] mb-4">
+      <div className="rounded-xl border border-[#1d6bff] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
+        <div className="snaga text-[15px] font-bold text-[var(--color-text-primary)] mb-4">
           Recent calls
         </div>
         <div className="flex items-center justify-center py-12 text-[var(--color-text-tertiary)] text-sm">
@@ -49,11 +49,7 @@ export function LogsTable({ calls }: Props) {
   }
 
   function formatCost(cents: number): string {
-    const dollars = cents / 100;
-    if (dollars >= 1) return `$${dollars.toFixed(2)}`;
-    if (dollars >= 0.01) return `$${dollars.toFixed(3)}`;
-    if (dollars > 0) return `$${dollars.toFixed(4)}`;
-    return "$0.00";
+    return `$${(cents / 100).toFixed(2)}`;
   }
 
   function formatLatency(ms: number): string {
@@ -62,10 +58,10 @@ export function LogsTable({ calls }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] shadow-[var(--shadow-card)]">
+    <div className="rounded-xl border border-[#1d6bff] bg-[var(--color-surface)] shadow-[var(--shadow-card)]">
       {/* Header */}
       <div className="px-6 py-4 border-b border-[var(--color-border)]">
-        <div className="text-[15px] font-bold text-[var(--color-text-primary)]">
+        <div className="snaga text-[15px] font-bold text-[var(--color-text-primary)]">
           Recent calls
         </div>
       </div>
@@ -78,7 +74,7 @@ export function LogsTable({ calls }: Props) {
               {["WHEN", "MODEL", "COST", "SPEED"].map((h) => (
                 <th
                   key={h}
-                  className="px-6 py-3 text-left text-[11px] font-medium text-[var(--color-text-tertiary)] uppercase tracking-wider"
+                  className="snaga px-6 py-3 text-left text-[11px] font-medium text-[var(--color-text-tertiary)] uppercase tracking-wider"
                 >
                   {h}
                 </th>

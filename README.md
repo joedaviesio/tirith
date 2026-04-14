@@ -10,28 +10,105 @@ Tirith is a local CLI + transparent proxy that logs every AI API call with cost,
 
 ## Quickstart (30 seconds)
 
+Install the binary, then pick the column that matches your stack:
+
+*shell · `terminal`*
+
 ```bash
-# 1. Install the binary
 brew install joedaviesio/homebrew-tap/tirith
-
-# 2. Start the proxy + dashboard
-tirith start
-
-# 3. Install the SDK and add one line to your code
-pip install tirith-sdk         # Python
-npm install tirith-sdk         # TypeScript
 ```
+
+<table>
+<tr>
+<th>Anthropic&nbsp;·&nbsp;Proxy</th>
+<th>Anthropic&nbsp;·&nbsp;Python&nbsp;SDK</th>
+<th>Anthropic&nbsp;·&nbsp;TypeScript&nbsp;SDK</th>
+<th>OpenAI&nbsp;·&nbsp;Python&nbsp;SDK</th>
+</tr>
+<tr>
+<td>
+
+*shell · `~/.zshrc`*
+
+```bash
+export ANTHROPIC_BASE_URL=\
+  http://localhost:5555/proxy/anthropic
+```
+
+*shell · `terminal`*
+
+```bash
+curl $ANTHROPIC_BASE_URL/v1/messages \
+  -H "x-api-key: $ANTHROPIC_API_KEY" \
+  -H "anthropic-version: 2023-06-01" \
+  -d '{...}'
+```
+
+</td>
+<td>
+
+*shell · `terminal`*
+
+```bash
+pip install tirith-sdk anthropic
+```
+
+*python · `app.py`*
 
 ```python
-import tirith          # auto-patches Anthropic + OpenAI clients
+import tirith
 import anthropic
-
-client = anthropic.Anthropic()
-client.messages.create(...)  # logged automatically
 ```
 
+</td>
+<td>
+
+*shell · `terminal`*
+
 ```bash
-# 4. See your costs
+npm install tirith-sdk @anthropic-ai/sdk
+```
+
+*typescript · `app.ts`*
+
+```ts
+import "tirith-sdk";
+import Anthropic from "@anthropic-ai/sdk";
+```
+
+</td>
+<td>
+
+*shell · `terminal`*
+
+```bash
+pip install tirith-sdk openai
+```
+
+*python · `app.py`*
+
+```python
+import tirith
+from openai import OpenAI
+```
+
+</td>
+</tr>
+</table>
+
+Once your code is wired up, start the proxy and run your app:
+
+*shell · `terminal`*
+
+```bash
+tirith start       # proxy on :5555, dashboard on :5556
+```
+
+Then view your spend:
+
+*shell · `terminal`*
+
+```bash
 tirith report
 open http://localhost:5556    # dashboard
 ```

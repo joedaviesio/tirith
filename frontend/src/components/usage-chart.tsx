@@ -68,16 +68,11 @@ export function UsageChart({ daily, calls, timeRange }: Props) {
   const chartData = timeRange === "1h" ? hourlyBuckets : daily;
   const dataKey = timeRange === "1h" ? "label" : "date";
 
-  const formatValue = (v: number) => {
-    if (v >= 0.01) return `$${v.toFixed(2)}`;
-    if (v > 0) return `$${v.toFixed(4)}`;
-    return "$0";
-  };
+  const formatValue = (v: number) => `$${v.toFixed(2)}`;
 
   const tooltipFormatter = (value: number, name: string) => {
     if (name === "calls" || name === "Calls") return `${value}`;
-    if (value >= 0.01) return `$${value.toFixed(2)}`;
-    return `$${value.toFixed(4)}`;
+    return `$${value.toFixed(2)}`;
   };
 
   const isEmpty =
@@ -87,7 +82,7 @@ export function UsageChart({ daily, calls, timeRange }: Props) {
 
   if (isEmpty) {
     return (
-      <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
+      <div className="rounded-xl border border-[#1d6bff] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
         <div className="flex items-center justify-center py-16 text-[var(--color-text-tertiary)] text-sm">
           No activity yet. Make API calls through the proxy to see spend here.
         </div>
@@ -96,7 +91,7 @@ export function UsageChart({ daily, calls, timeRange }: Props) {
   }
 
   return (
-    <div className="rounded-xl border border-[var(--color-border-light)] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
+    <div className="rounded-xl border border-[#1d6bff] bg-[var(--color-surface)] p-6 shadow-[var(--shadow-card)]">
       <div className="flex items-center justify-between mb-1">
         <div className="text-[15px] font-bold text-[var(--color-text-primary)]">
           Spend over time
