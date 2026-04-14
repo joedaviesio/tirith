@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  go:
+    name: Go (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Ensure embed placeholder exists
+        run: mkdir -p internal/dashboard/frontend && touch internal/dashboard/frontend/.gitkeep
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Test
+        run: go test -race ./...
+
+      - name: Build
+        run: go build ./...
+
+  lint:
+    name: golangci-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: mkdir -p internal/dashboard/frontend && touch internal/dashboard/frontend/.gitkeep
+      - uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+  python:
+    name: Python SDK
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.9", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - name: Install
+        working-directory: sdks/python
+        run: |
+          pip install -e .
+          pip install pytest
+      - name: Test
+        working-directory: sdks/python
+        run: pytest --ignore-glob="build/*" || [ $? -eq 5 ]
+
+  typescript:
+    name: TypeScript SDK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install
+        working-directory: sdks/typescript
+        run: npm install
+      - name: Build
+        working-directory: sdks/typescript
+        run: npm run build
+      - name: Test
+        working-directory: sdks/typescript
+        run: |
+          if [ -n "$(ls tests/*.{js,mjs,ts} 2>/dev/null)" ]; then
+            npm test
+          else
+            echo "No tests found — skipping"
+          fi
+
+  cross-compile:
+    name: Cross-compile check
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        include:
+          - goos: linux
+            goarch: amd64
+          - goos: linux
+            goarch: arm64
+          - goos: darwin
+            goarch: amd64
+          - goos: darwin
+            goarch: arm64
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+      - run: mkdir -p internal/dashboard/frontend && touch internal/dashboard/frontend/.gitkeep
+      - name: Build ${{ matrix.goos }}/${{ matrix.goarch }}
+        env:
+          GOOS: ${{ matrix.goos }}
+          GOARCH: ${{ matrix.goarch }}
+          CGO_ENABLED: 0
+        run: go build ./cmd/tirith
