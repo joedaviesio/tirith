@@ -81,7 +81,7 @@ func (s *Server) Shutdown() error {
 
 func writeJSON(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(data)
+	_ = json.NewEncoder(w).Encode(data)
 }
 
 // parseTZ returns the *time.Location for the tz query param, defaulting to UTC.

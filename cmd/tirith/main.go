@@ -103,8 +103,8 @@ func runStart(port int, openBrowser bool) error {
 		fmt.Fprintln(os.Stderr, "\nStopping Tirith... bye!")
 		var wg sync.WaitGroup
 		wg.Add(2)
-		go func() { defer wg.Done(); dash.Shutdown() }()
-		go func() { defer wg.Done(); srv.Shutdown() }()
+		go func() { defer wg.Done(); _ = dash.Shutdown() }()
+		go func() { defer wg.Done(); _ = srv.Shutdown() }()
 		wg.Wait()
 		close(shutdownDone)
 	}()
@@ -157,7 +157,7 @@ func openURL(url string) {
 	default:
 		return
 	}
-	cmd.Start()
+	_ = cmd.Start()
 }
 
 func startCmd() *cobra.Command {
@@ -330,8 +330,8 @@ func runCmd() *cobra.Command {
 			err = child.Run()
 
 			// Shutdown proxy after child exits.
-			srv.Shutdown()
-			store.Close()
+			_ = srv.Shutdown()
+			_ = store.Close()
 
 			if err != nil {
 				if exitErr, ok := err.(*exec.ExitError); ok {

@@ -189,5 +189,5 @@ func (s *Server) handleAnthropic(w http.ResponseWriter, r *http.Request) {
 	// Return response to client with safe headers only.
 	copySafeHeaders(resp.Header, w.Header())
 	w.WriteHeader(resp.StatusCode)
-	w.Write(respBody)
+	_, _ = w.Write(respBody)
 }

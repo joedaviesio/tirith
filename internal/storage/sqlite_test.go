@@ -92,8 +92,8 @@ func TestFilterBySince(t *testing.T) {
 	}
 	recent := sampleCall("new", "claude-sonnet-4-6", "", "", "default", 100, 50, 3)
 
-	s.Insert(old)
-	s.Insert(recent)
+	_ = s.Insert(old)
+	_ = s.Insert(recent)
 
 	sum, err := s.GetSummary(ReportFilter{Since: time.Now().UTC().Add(-1 * time.Hour)})
 	if err != nil {
@@ -107,8 +107,8 @@ func TestFilterBySince(t *testing.T) {
 func TestFilterByTag(t *testing.T) {
 	s := testStore(t)
 
-	s.Insert(sampleCall("1", "claude-sonnet-4-6", "scanner", "alice", "prod", 100, 50, 5))
-	s.Insert(sampleCall("2", "claude-sonnet-4-6", "chat", "alice", "prod", 100, 50, 3))
+	_ = s.Insert(sampleCall("1", "claude-sonnet-4-6", "scanner", "alice", "prod", 100, 50, 5))
+	_ = s.Insert(sampleCall("2", "claude-sonnet-4-6", "chat", "alice", "prod", 100, 50, 3))
 
 	sum, err := s.GetSummary(ReportFilter{Tag: "scanner"})
 	if err != nil {
@@ -125,8 +125,8 @@ func TestFilterByTag(t *testing.T) {
 func TestFilterByModel(t *testing.T) {
 	s := testStore(t)
 
-	s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "", "default", 100, 50, 5))
-	s.Insert(sampleCall("2", "claude-haiku-4-5-20251001", "", "", "default", 200, 80, 2))
+	_ = s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "", "default", 100, 50, 5))
+	_ = s.Insert(sampleCall("2", "claude-haiku-4-5-20251001", "", "", "default", 200, 80, 2))
 
 	sum, err := s.GetSummary(ReportFilter{Model: "claude-haiku-4-5-20251001"})
 	if err != nil {
@@ -140,9 +140,9 @@ func TestFilterByModel(t *testing.T) {
 func TestGetByModel(t *testing.T) {
 	s := testStore(t)
 
-	s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "", "default", 100, 50, 5))
-	s.Insert(sampleCall("2", "claude-sonnet-4-6", "", "", "default", 100, 50, 3))
-	s.Insert(sampleCall("3", "claude-haiku-4-5-20251001", "", "", "default", 200, 80, 1))
+	_ = s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "", "default", 100, 50, 5))
+	_ = s.Insert(sampleCall("2", "claude-sonnet-4-6", "", "", "default", 100, 50, 3))
+	_ = s.Insert(sampleCall("3", "claude-haiku-4-5-20251001", "", "", "default", 200, 80, 1))
 
 	models, err := s.GetByModel(ReportFilter{})
 	if err != nil {
@@ -163,9 +163,9 @@ func TestGetByModel(t *testing.T) {
 func TestGetByTag(t *testing.T) {
 	s := testStore(t)
 
-	s.Insert(sampleCall("1", "claude-sonnet-4-6", "scanner", "", "default", 100, 50, 5))
-	s.Insert(sampleCall("2", "claude-sonnet-4-6", "scanner", "", "default", 100, 50, 3))
-	s.Insert(sampleCall("3", "claude-sonnet-4-6", "chat", "", "default", 100, 50, 1))
+	_ = s.Insert(sampleCall("1", "claude-sonnet-4-6", "scanner", "", "default", 100, 50, 5))
+	_ = s.Insert(sampleCall("2", "claude-sonnet-4-6", "scanner", "", "default", 100, 50, 3))
+	_ = s.Insert(sampleCall("3", "claude-sonnet-4-6", "chat", "", "default", 100, 50, 1))
 
 	tags, err := s.GetByTag(ReportFilter{})
 	if err != nil {
@@ -185,8 +185,8 @@ func TestGetByTag(t *testing.T) {
 func TestGetByUser(t *testing.T) {
 	s := testStore(t)
 
-	s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "alice", "default", 100, 50, 5))
-	s.Insert(sampleCall("2", "claude-sonnet-4-6", "", "bob", "default", 100, 50, 3))
+	_ = s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "alice", "default", 100, 50, 5))
+	_ = s.Insert(sampleCall("2", "claude-sonnet-4-6", "", "bob", "default", 100, 50, 3))
 
 	users, err := s.GetByUser(ReportFilter{})
 	if err != nil {
@@ -200,8 +200,8 @@ func TestGetByUser(t *testing.T) {
 func TestGetDailySpend(t *testing.T) {
 	s := testStore(t)
 
-	s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "", "default", 100, 50, 5))
-	s.Insert(sampleCall("2", "claude-sonnet-4-6", "", "", "default", 100, 50, 3))
+	_ = s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "", "default", 100, 50, 5))
+	_ = s.Insert(sampleCall("2", "claude-sonnet-4-6", "", "", "default", 100, 50, 3))
 
 	daily, err := s.GetDailySpend(ReportFilter{})
 	if err != nil {
@@ -218,8 +218,8 @@ func TestGetDailySpend(t *testing.T) {
 func TestGetDailyByModel(t *testing.T) {
 	s := testStore(t)
 
-	s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "", "default", 100, 50, 5))
-	s.Insert(sampleCall("2", "claude-haiku-4-5-20251001", "", "", "default", 200, 80, 2))
+	_ = s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "", "default", 100, 50, 5))
+	_ = s.Insert(sampleCall("2", "claude-haiku-4-5-20251001", "", "", "default", 200, 80, 2))
 
 	daily, err := s.GetDailyByModel(ReportFilter{})
 	if err != nil {
@@ -237,7 +237,7 @@ func TestGetRecentCalls(t *testing.T) {
 		c := sampleCall(
 			fmt.Sprintf("call-%d", i), "claude-sonnet-4-6", "", "", "default", 100, 50, 5,
 		)
-		s.Insert(c)
+		_ = s.Insert(c)
 	}
 
 	calls, err := s.GetRecentCalls(3)
@@ -291,7 +291,7 @@ func TestDatabaseFileCreated(t *testing.T) {
 func TestTimezoneOffset(t *testing.T) {
 	s := testStore(t)
 
-	s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "", "default", 100, 50, 5))
+	_ = s.Insert(sampleCall("1", "claude-sonnet-4-6", "", "", "default", 100, 50, 5))
 
 	// With a timezone offset, daily spend should still return one row.
 	daily, err := s.GetDailySpend(ReportFilter{TZOffset: "+12:00"})

@@ -58,7 +58,7 @@ func fakeAnthropicUpstream() http.HandlerFunc {
 
 		body, _ := io.ReadAll(r.Body)
 		var req map[string]interface{}
-		json.Unmarshal(body, &req)
+		_ = json.Unmarshal(body, &req)
 
 		if stream, ok := req["stream"].(bool); ok && stream {
 			w.Header().Set("Content-Type", "text/event-stream")
@@ -79,7 +79,7 @@ func fakeAnthropicUpstream() http.HandlerFunc {
 		w.Header().Set("Set-Cookie", "evil=1")
 		w.Header().Set("Server", "evil-server")
 		w.WriteHeader(200)
-		w.Write([]byte(resp))
+		_, _ = w.Write([]byte(resp))
 	}
 }
 
@@ -298,7 +298,7 @@ func TestQueryStringPreserved(t *testing.T) {
 		receivedQuery = r.URL.RawQuery
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(200)
-		w.Write([]byte(`{"model":"claude-sonnet-4-6","usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}`))
+		_, _ = w.Write([]byte(`{"model":"claude-sonnet-4-6","usage":{"input_tokens":10,"output_tokens":5,"cache_read_input_tokens":0,"cache_creation_input_tokens":0}}`))
 	}
 
 	srv, _ := setupProxy(t, upstream)
