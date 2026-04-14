@@ -46,6 +46,9 @@ func NewServer(cfg *config.Config, store *storage.Store, pricer *pricing.Engine,
 	// Auto-detect routing: /v1/messages → Anthropic
 	mux.HandleFunc("/v1/messages", s.handleAnthropic)
 
+	// OpenAI proxy routes: /proxy/openai/...
+	mux.HandleFunc("/proxy/openai/", s.handleOpenAI)
+
 	// Health check
 	mux.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

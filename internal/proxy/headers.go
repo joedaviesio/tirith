@@ -23,6 +23,17 @@ var safeResponseHeaders = map[string]bool{
 	"anthropic-ratelimit-remaining": true,
 	"anthropic-ratelimit-reset":     true,
 	"retry-after":               true,
+	// OpenAI rate-limit / observability headers.
+	"openai-model":                     true,
+	"openai-organization":              true,
+	"openai-processing-ms":             true,
+	"openai-version":                   true,
+	"x-ratelimit-limit-requests":       true,
+	"x-ratelimit-limit-tokens":         true,
+	"x-ratelimit-remaining-requests":   true,
+	"x-ratelimit-remaining-tokens":     true,
+	"x-ratelimit-reset-requests":       true,
+	"x-ratelimit-reset-tokens":         true,
 }
 
 // copySafeHeaders copies only whitelisted headers from src to dst.

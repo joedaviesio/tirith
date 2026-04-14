@@ -50,7 +50,7 @@ export function FilterBar({
           <button
             key={tr.value}
             onClick={() => onTimeRangeChange(tr.value)}
-            className="px-4 py-2 rounded-full text-[14px] font-medium cursor-pointer transition-all"
+            className="snaga px-4 py-2 rounded-full text-[14px] font-medium cursor-pointer transition-all"
             style={{
               border:
                 timeRange === tr.value
@@ -77,7 +77,7 @@ export function FilterBar({
           onClick={() => setModelOpen(!modelOpen)}
           className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[13px] font-medium cursor-pointer border-[1.5px] border-[var(--color-border-light)] bg-[var(--color-surface)]"
         >
-          <span className="text-[var(--color-text-secondary)]">Model:</span>
+          <span className="snaga text-[var(--color-text-secondary)]">Model:</span>
           <span className="text-[var(--color-text-primary)]">
             {selectedModel || "All"}
           </span>
