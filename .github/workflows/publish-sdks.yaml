@@ -1,0 +1,77 @@
+name: Publish SDKs
+
+on:
+  push:
+    tags:
+      - "v*"
+
+jobs:
+  pypi:
+    name: Publish Python SDK to PyPI
+    runs-on: ubuntu-latest
+    environment: pypi
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Set version from tag
+        working-directory: sdks/python
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Publishing version: $VERSION"
+          sed -i "s/^version = .*/version = \"$VERSION\"/" pyproject.toml
+
+      - name: Install build tools
+        run: pip install build twine
+
+      - name: Build
+        working-directory: sdks/python
+        run: python -m build
+
+      - name: Check
+        working-directory: sdks/python
+        run: twine check dist/*
+
+      - name: Publish to PyPI
+        working-directory: sdks/python
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: twine upload dist/*
+
+  npm:
+    name: Publish TypeScript SDK to npm
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Set version from tag
+        working-directory: sdks/typescript
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "Publishing version: $VERSION"
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Install
+        working-directory: sdks/typescript
+        run: npm ci
+
+      - name: Build
+        working-directory: sdks/typescript
+        run: npm run build
+
+      - name: Publish to npm
+        working-directory: sdks/typescript
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
