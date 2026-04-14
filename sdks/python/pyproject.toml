@@ -3,7 +3,7 @@ requires = ["setuptools>=64"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "tirith"
+name = "tirith-sdk"
 version = "2.0.0"
 description = "AI API cost observability — one import, full transparency"
 readme = "README.md"
@@ -21,6 +21,7 @@ classifiers = [
 Homepage = "https://github.com/joedaviesio/tirith"
 Documentation = "https://github.com/joedaviesio/tirith"
 Source = "https://github.com/joedaviesio/tirith"
+Issues = "https://github.com/joedaviesio/tirith/issues"
 
 [tool.setuptools.packages.find]
 include = ["tirith*"]

@@ -17,7 +17,9 @@ brew install joedaviesio/homebrew-tap/tirith
 # 2. Start the proxy + dashboard
 tirith start
 
-# 3. Add one line to your code
+# 3. Install the SDK and add one line to your code
+pip install tirith-sdk         # Python
+npm install tirith-sdk         # TypeScript
 ```
 
 ```python
@@ -40,7 +42,7 @@ Pick whichever fits your workflow — all three do the same thing:
 
 | Path | How | When to use |
 |---|---|---|
-| **SDK wrapper** | `import tirith` (Python) / `import "tirith"` (TS) | Recommended — zero config, auto-patches clients at import |
+| **SDK wrapper** | `import tirith` (Python) / `import "tirith-sdk"` (TS) | Recommended — zero config, auto-patches clients at import |
 | **CLI wrapper** | `tirith run -- python app.py` | Ad-hoc runs without touching code |
 | **Manual env var** | `export ANTHROPIC_BASE_URL=http://localhost:5555/proxy/anthropic` | Anything that reads `*_BASE_URL` |
 
