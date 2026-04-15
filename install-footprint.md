@@ -54,7 +54,7 @@ No prompt/response content is logged by default. API keys are forwarded but neve
    - Go install: `rm ~/go/bin/tirith`
 3. **Remove all data + config:** `rm -rf ~/.tirith`
 4. **Uninstall SDKs from each project:**
-   - `pip uninstall tirith-sdk`
+   - `pip3 uninstall tirith-sdk`
    - `npm uninstall tirith-sdk`
 5. **Remove the import lines** from your source files (one `import tirith` / `import "tirith"` per entrypoint)
 
