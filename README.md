@@ -1,5 +1,9 @@
 # Tirith
 
+Video launch 
+
+https://www.youtube.com/shorts/uZCAqzqLfi4
+
 [![Go Reference](https://pkg.go.dev/badge/github.com/joedaviesio/tirith.svg)](https://pkg.go.dev/github.com/joedaviesio/tirith)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Release](https://img.shields.io/github/v/release/joedaviesio/tirith)](https://github.com/joedaviesio/tirith/releases)
