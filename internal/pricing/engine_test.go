@@ -103,6 +103,40 @@ func TestCalculateCostCents_ModelPrefixMatch(t *testing.T) {
 	}
 }
 
+func TestCalculateCostCents_LongestPrefixWins(t *testing.T) {
+	e := testEngine(t)
+
+	// 1M input tokens, so the cost in cents is the input price × 100.
+	tests := []struct {
+		name     string
+		provider string
+		model    string
+		want     int
+	}{
+		{"dated mini is not priced as gpt-4o", "openai", "gpt-4o-mini-2024-07-18", 15},
+		{"dated gpt-4o", "openai", "gpt-4o-2024-08-06", 250},
+		{"dated gpt-5-mini is not priced as gpt-5", "openai", "gpt-5-mini-2025-08-07", 25},
+		{"dated haiku", "anthropic", "claude-haiku-4-5-20251001", 100},
+		{"opus 5.5 is not priced as opus 5", "anthropic", "claude-opus-5-5", 400},
+		{"opus 5", "anthropic", "claude-opus-5", 500},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			// Repeat because map iteration order is random.
+			for i := 0; i < 50; i++ {
+				cost, err := e.CalculateCostCents(tt.provider, tt.model, TokenUsage{InputTokens: 1_000_000})
+				if err != nil {
+					t.Fatalf("CalculateCostCents: %v", err)
+				}
+				if cost != tt.want {
+					t.Fatalf("cost = %d, want %d", cost, tt.want)
+				}
+			}
+		})
+	}
+}
+
 func TestListModels(t *testing.T) {
 	e := testEngine(t)
 

@@ -62,12 +62,14 @@ func (e *Engine) CalculateCostCents(provider, model string, usage TokenUsage) (i
 
 	modelData, ok := providerData.Models[model]
 	if !ok {
-		// Try without version suffix (e.g., "claude-sonnet-4-6-20260301" -> "claude-sonnet-4-6")
+		// Try without version suffix (e.g., "claude-sonnet-4-6-20260301" -> "claude-sonnet-4-6").
+		// Longest prefix wins, so "gpt-4o-mini-2024-07-18" matches "gpt-4o-mini", not "gpt-4o".
+		longest := 0
 		for name, md := range providerData.Models {
-			if strings.HasPrefix(model, name) {
+			if strings.HasPrefix(model, name) && len(name) > longest {
 				modelData = md
+				longest = len(name)
 				ok = true
-				break
 			}
 		}
 		if !ok {
