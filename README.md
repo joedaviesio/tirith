@@ -12,6 +12,10 @@ https://www.youtube.com/shorts/uZCAqzqLfi4
 
 Tirith is a local CLI + transparent proxy that logs every AI API call with cost, tokens, latency, and custom tags. Add one import line to your app — nothing else changes.
 
+> **Project status (October 2026):** Tirith is stable but not under active development. Issues and PRs are welcome; responses may be slow.
+>
+> Model prices are baked into the binary and were last updated on 2026-10-06. Calls to models released after that date are still logged, but may show a cost of $0 or the price of an older model with a similar name. Long-context and batch rates are not modelled. Check [`pricing/pricing.yaml`](./pricing/pricing.yaml) against your provider's pricing page if the numbers matter.
+
 ## Quickstart (30 seconds)
 
 Install the binary, then pick the column that matches your stack:

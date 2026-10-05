@@ -33,6 +33,9 @@ TIRITH_ARCHITECTURE.md
 LAUNCH_CHECKLIST.md
 TIRITH_OPENAI_BOTTLENECK.md
 STARTUP.md
+tirith_launch_status.md
+LAUNCH_TEST_MATRIX.md
+VIDEO_POSTS.md
 # Tirith data
 *.db
 
