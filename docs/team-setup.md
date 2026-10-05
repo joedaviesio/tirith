@@ -47,7 +47,7 @@ Install the wrapper and add a single import — all AI client calls are automati
 **Python:**
 
 ```bash
-pip install tirith
+pip install tirith-sdk
 ```
 
 ```python
@@ -61,7 +61,7 @@ client = anthropic.Anthropic()
 **TypeScript:**
 
 ```bash
-npm install tirith
+npm install tirith-sdk
 ```
 
 ```typescript
